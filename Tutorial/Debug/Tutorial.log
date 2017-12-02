@@ -1,0 +1,53 @@
+﻿  Debug_Display.cpp
+c:\users\mikep\onedrive\documents\visual studio 2015\projects\tutorial\tutorial\source\geometry.h(52): warning C4305: 'argument': truncation from 'unsigned int' to 'float'
+c:\users\mikep\onedrive\documents\visual studio 2015\projects\tutorial\tutorial\source\debug_display.cpp(12): warning C4018: '<': signed/unsigned mismatch
+c:\users\mikep\onedrive\documents\visual studio 2015\projects\tutorial\tutorial\source\debug_display.cpp(15): warning C4244: 'argument': conversion from 'double' to 'GLfloat', possible loss of data
+c:\users\mikep\onedrive\documents\visual studio 2015\projects\tutorial\tutorial\source\debug_display.cpp(16): warning C4244: 'argument': conversion from 'double' to 'GLfloat', possible loss of data
+c:\users\mikep\onedrive\documents\visual studio 2015\projects\tutorial\tutorial\source\debug_display.cpp(17): warning C4244: 'argument': conversion from 'double' to 'GLfloat', possible loss of data
+c:\users\mikep\onedrive\documents\visual studio 2015\projects\tutorial\tutorial\source\debug_display.cpp(25): warning C4018: '<': signed/unsigned mismatch
+c:\users\mikep\onedrive\documents\visual studio 2015\projects\tutorial\tutorial\source\debug_display.cpp(31): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+c:\users\mikep\onedrive\documents\visual studio 2015\projects\tutorial\tutorial\source\debug_display.cpp(35): warning C4018: '<': signed/unsigned mismatch
+  Generating Code...
+  Compiling...
+  Source.cpp
+c:\users\mikep\onedrive\documents\visual studio 2015\projects\tutorial\tutorial\source\geometry.h(52): warning C4305: 'argument': truncation from 'unsigned int' to 'float'
+c:\users\mikep\onedrive\documents\visual studio 2015\projects\tutorial\tutorial\source\source.cpp(33): warning C4305: 'initializing': truncation from 'double' to 'float'
+c:\users\mikep\onedrive\documents\visual studio 2015\projects\tutorial\tutorial\source\source.cpp(85): warning C4018: '<': signed/unsigned mismatch
+c:\users\mikep\onedrive\documents\visual studio 2015\projects\tutorial\tutorial\source\source.cpp(108): warning C4018: '<': signed/unsigned mismatch
+c:\users\mikep\onedrive\documents\visual studio 2015\projects\tutorial\tutorial\source\source.cpp(121): warning C4305: 'argument': truncation from 'double' to 'float'
+c:\users\mikep\onedrive\documents\visual studio 2015\projects\tutorial\tutorial\source\source.cpp(123): warning C4305: 'argument': truncation from 'double' to 'float'
+c:\users\mikep\onedrive\documents\visual studio 2015\projects\tutorial\tutorial\source\source.cpp(127): warning C4305: 'argument': truncation from 'double' to 'float'
+c:\users\mikep\onedrive\documents\visual studio 2015\projects\tutorial\tutorial\source\source.cpp(139): warning C4305: 'argument': truncation from 'double' to 'float'
+c:\users\mikep\onedrive\documents\visual studio 2015\projects\tutorial\tutorial\source\source.cpp(146): warning C4244: 'argument': conversion from 'time_t' to 'unsigned int', possible loss of data
+c:\users\mikep\onedrive\documents\visual studio 2015\projects\tutorial\tutorial\source\source.cpp(218): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+c:\users\mikep\onedrive\documents\visual studio 2015\projects\tutorial\tutorial\source\source.cpp(262): warning C4018: '<': signed/unsigned mismatch
+c:\users\mikep\onedrive\documents\visual studio 2015\projects\tutorial\tutorial\source\source.cpp(264): warning C4018: '<': signed/unsigned mismatch
+c:\users\mikep\onedrive\documents\visual studio 2015\projects\tutorial\tutorial\source\source.cpp(423): warning C4018: '<': signed/unsigned mismatch
+c:\users\mikep\onedrive\documents\visual studio 2015\projects\tutorial\tutorial\source\source.cpp(432): warning C4018: '<': signed/unsigned mismatch
+c:\users\mikep\onedrive\documents\visual studio 2015\projects\tutorial\tutorial\source\source.cpp(471): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
+c:\users\mikep\onedrive\documents\visual studio 2015\projects\tutorial\tutorial\source\source.cpp(493): warning C4018: '<': signed/unsigned mismatch
+c:\users\mikep\onedrive\documents\visual studio 2015\projects\tutorial\tutorial\source\source.cpp(498): warning C4018: '<': signed/unsigned mismatch
+c:\users\mikep\onedrive\documents\visual studio 2015\projects\tutorial\tutorial\source\source.cpp(500): warning C4018: '<': signed/unsigned mismatch
+c:\users\mikep\onedrive\documents\visual studio 2015\projects\tutorial\tutorial\source\source.cpp(515): warning C4018: '<': signed/unsigned mismatch
+c:\users\mikep\onedrive\documents\visual studio 2015\projects\tutorial\tutorial\source\source.cpp(520): warning C4018: '<': signed/unsigned mismatch
+c:\users\mikep\onedrive\documents\visual studio 2015\projects\tutorial\tutorial\source\source.cpp(545): warning C4018: '<': signed/unsigned mismatch
+c:\users\mikep\onedrive\documents\visual studio 2015\projects\tutorial\tutorial\source\source.cpp(550): warning C4018: '<': signed/unsigned mismatch
+c:\users\mikep\onedrive\documents\visual studio 2015\projects\tutorial\tutorial\source\source.cpp(591): warning C4018: '<': signed/unsigned mismatch
+c:\users\mikep\onedrive\documents\visual studio 2015\projects\tutorial\tutorial\source\source.cpp(613): warning C4018: '<': signed/unsigned mismatch
+c:\users\mikep\onedrive\documents\visual studio 2015\projects\tutorial\tutorial\source\source.cpp(634): warning C4018: '<': signed/unsigned mismatch
+c:\users\mikep\onedrive\documents\visual studio 2015\projects\tutorial\tutorial\source\source.cpp(655): warning C4018: '<': signed/unsigned mismatch
+c:\users\mikep\onedrive\documents\visual studio 2015\projects\tutorial\tutorial\source\source.cpp(669): warning C4018: '<': signed/unsigned mismatch
+c:\users\mikep\onedrive\documents\visual studio 2015\projects\tutorial\tutorial\source\source.cpp(701): warning C4018: '<': signed/unsigned mismatch
+c:\users\mikep\onedrive\documents\visual studio 2015\projects\tutorial\tutorial\source\source.cpp(725): warning C4018: '<': signed/unsigned mismatch
+c:\users\mikep\onedrive\documents\visual studio 2015\projects\tutorial\tutorial\source\source.cpp(801): warning C4018: '<': signed/unsigned mismatch
+c:\users\mikep\onedrive\documents\visual studio 2015\projects\tutorial\tutorial\source\source.cpp(816): warning C4018: '<': signed/unsigned mismatch
+c:\users\mikep\onedrive\documents\visual studio 2015\projects\tutorial\tutorial\source\source.cpp(828): warning C4018: '<': signed/unsigned mismatch
+c:\users\mikep\onedrive\documents\visual studio 2015\projects\tutorial\tutorial\source\source.cpp(832): warning C4018: '<': signed/unsigned mismatch
+c:\users\mikep\onedrive\documents\visual studio 2015\projects\tutorial\tutorial\source\source.cpp(852): warning C4018: '<': signed/unsigned mismatch
+c:\users\mikep\onedrive\documents\visual studio 2015\projects\tutorial\tutorial\source\source.cpp(912): warning C4018: '<': signed/unsigned mismatch
+c:\users\mikep\onedrive\documents\visual studio 2015\projects\tutorial\tutorial\source\source.cpp(989): warning C4018: '<': signed/unsigned mismatch
+c:\users\mikep\onedrive\documents\visual studio 2015\projects\tutorial\tutorial\source\source.cpp(1019): warning C4018: '<': signed/unsigned mismatch
+c:\users\mikep\onedrive\documents\visual studio 2015\projects\tutorial\tutorial\source\source.cpp(1041): warning C4018: '<': signed/unsigned mismatch
+  Generating Code...
+  Tutorial.vcxproj -> C:\Users\mikep\OneDrive\Documents\Visual Studio 2015\Projects\Tutorial\Debug\Tutorial.exe
+  Tutorial.vcxproj -> C:\Users\mikep\OneDrive\Documents\Visual Studio 2015\Projects\Tutorial\Debug\Tutorial.pdb (Partial PDB)
