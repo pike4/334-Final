@@ -270,116 +270,16 @@ std::vector<Point> getIntersections(std::vector<Highway>* linesToDo)
             Line l2 = (*linesToDo)[j];
 
             //Get slope intercept form describing line segments
-            Point f1 = l1.formula();
-            Point f2 = l2.formula();
+            Point f1 = l1.intercept(l2);
+            
+            if(l1.contains(f1) && l2.contains(f1)) {
+                Intercept* newIntercept = new Intercept(f1.x, f1.y, &(*linesToDo)[i], &(*linesToDo)[j]);
 
-            if ( !f1.isInf() && !f2.isInf() )
-            {
-                //Can't calculate if f1.m is - cause we divide by it
-                if (f1.m() != 0)
-                {
-                    // Now solve the system of equations to get intersection point
-                    float factor = f2.m() / f1.m();
-                    float newB = f2.b() - (f1.b() * factor);
-                    float a = 1 - factor;
-                    float newY = newB / a;
-                    float newX = (newY - f1.b()) / f1.m();
+                (*linesToDo)[i].intercepts.push_back(newIntercept);
+                (*linesToDo)[j].intercepts.push_back(newIntercept);
 
-                    //Add the intercept point if it is within bounds
-                    if (newY <= std::min(std::max(l1.a.y, l1.b.y), std::max(l2.a.y, l2.b.y)))
-                    {
-                        if (newY >= std::max(std::min(l1.a.y, l1.b.y), std::min(l2.a.y, l2.b.y)))
-                        {
-                            if (newX >= std::max(std::min(l1.a.x, l1.b.x), std::min(l2.a.x, l2.b.x)))
-                            {
-                                if (newX <= std::min(std::max(l1.a.x, l1.b.x), std::max(l2.a.x, l2.b.x)))
-                                {
-                                    Intercept* newIntercept = new Intercept(newX, newY, &(*linesToDo)[i], &(*linesToDo)[j]);
-
-                                    (*linesToDo)[i].intercepts.push_back(newIntercept);
-                                    (*linesToDo)[j].intercepts.push_back(newIntercept);
-
-                                    ret.push_back(Point(newX, newY));
-                                    printf("x: %f\ny: %f\n\n", newX, newY);
-                                }
-                            }
-                        }
-                    }
-                }
-
-                //l1 is horizontal
-                else
-                {
-                    //l1 and l2 are parallel
-                    if (f2.m() == 0)
-                    {
-                        continue;
-                    }
-
-                    //l2 and l1 intersect somewhere
-                    else
-                    {
-                        float newY = l1.a.y;
-
-                        float newX = (newY - f2.b()) / f2.m();
-
-                        Intercept* newIntercept = new Intercept(newX, newY, &(*linesToDo)[i], &(*linesToDo)[j]);
-
-                        if (newY > -1.0f && newY < 1 && newX > -1 && newX < 1)
-                        {
-                            Intercept* newIntercept = new Intercept(newX, newY, &(*linesToDo)[i], &(*linesToDo)[j]);
-
-                            (*linesToDo)[i].intercepts.push_back(newIntercept);
-                            (*linesToDo)[j].intercepts.push_back(newIntercept);
-
-                            ret.push_back(Point(newX, newY));
-                            printf("x: %f\ny: %f\n\n", newX, newY);
-                        }
-                    }
-                }
-            }
-
-            //Both linesToDo are vertical, no intersection
-            else if (f1.isInf() && f2.isInf())
-            {
-                continue;
-            }
-
-            //One line is vertical and the other is not
-            else
-            {
-                Point a, b;
-                Line vertLine = Line(a, b);
-                Point otherFormula;
-
-                if (f1.isInf())
-                {
-                    vertLine = l1;
-                    otherFormula = f2;
-                }
-
-                else 
-                {
-                    vertLine = l2;
-                    otherFormula = f1;
-                }
-
-                float newX = vertLine.a.x;
-
-                float newY = (otherFormula.m() * newX) + otherFormula.b();
-
-                Intercept* newIntercept = new Intercept(newX, newY, &(*linesToDo)[i], &(*linesToDo)[j]);
-
-                if (newY > -1.0f && newY < 1 && newX > -1 && newX < 1)
-                {
-                    Intercept* newIntercept = new Intercept(newX, newY, &(*linesToDo)[i], &(*linesToDo)[j]);
-
-                    (*linesToDo)[i].intercepts.push_back(newIntercept);
-                    (*linesToDo)[j].intercepts.push_back(newIntercept);
-
-                    ret.push_back(Point(newX, newY));
-                    printf("x: %f\ny: %f\n\n", newX, newY);
-                }
+                ret.push_back(f1);
+                printf("x: %f\ny: %f\n\n", f1.x, f1.y);
             }
         }
     }

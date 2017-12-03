@@ -61,6 +61,85 @@ public:
         return Point(slope, intercept);
     }
 
+    Point intercept(Line other)
+    {
+        Point f1 = formula();
+        Point f2 = other.formula();
+
+        if (!f1.isInf() && !f2.isInf())
+        {
+            //Can't calculate if f1.m is - cause we divide by it
+            if (f1.m() != 0)
+            {
+                // Now solve the system of equations to get intersection point
+                float factor = f2.m() / f1.m();
+                float newB = f2.b() - (f1.b() * factor);
+                float a = 1 - factor;
+                float newY = newB / a;
+                float newX = (newY - f1.b()) / f1.m();
+
+                return Point(newX, newY);
+            }
+
+            //l1 is horizontal
+            else
+            {
+                //l1 and l2 are parallel
+                if (f2.m() == 0)
+                {
+                    return Point(0xdeadbeef, 0xdeadbeef);
+                }
+
+                //l2 and l1 intersect somewhere
+                else
+                {
+                    float newY = a.y;
+                    float newX = (newY - f2.b()) / f2.m();
+
+                    return Point(newX, newY);
+                }
+            }
+        }
+
+        //Both linesToDo are vertical, no intersection
+        else if (f1.isInf() && f2.isInf())
+        {
+            return Point(0xdeadbeef, 0xdeadbeef);
+        }
+
+        //One line is vertical and the other is not
+        else
+        {
+            Point a, b;
+            Line vertLine = Line(a, b);
+            Point otherFormula;
+
+            if (f1.isInf())
+            {
+                vertLine = *this;
+                otherFormula = f2;
+            }
+
+            else
+            {
+                vertLine = other;
+                otherFormula = f1;
+            }
+
+            float newX = vertLine.a.x;
+            float newY = (otherFormula.m() * newX) + otherFormula.b();
+
+            return Point(newX, newY);
+        }
+    }
+
+    bool contains(Point other) {
+        bool b1 = (std::min(a.x, b.x) < (other.x + 0.001) );
+        bool b2 = (std::max(a.x, b.x) > (other.x - 0.001) );
+
+        return (b1 && b2 && !other.isInf());
+    }
+
     Point a;
     Point b;
 };
