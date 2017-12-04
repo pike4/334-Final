@@ -28,93 +28,14 @@ static const GLfloat vertices[] =
     0.0f, 1.0f, 0.0f
 };
 
-const int NUM_VERTICAL_HIGHWAYS = 0;
-const int NUM_HORIZONTAL_HIGHWAYS = 1;
+const int NUM_VERTICAL_HIGHWAYS = 2;
+const int NUM_HORIZONTAL_HIGHWAYS = 2;
 const int NUM_MID_STREETS = 2;
 
 const float STREET_WIDTH = 0.15;
 
 // Likelihood that a given highway will be parallel to an axis rather than at an angle
 const float HIGHWAY_TAXI_FACTOR = 0.0;
-
-GLuint loadShader(const char* path, const int type) {
-    //Initialize a slot for a vertex shader
-    GLuint shaderID = glCreateShader(type);
-
-    //Read the file to a string
-    std::string code;
-    std::ifstream VertexShaderStream(path, std::ios::in);
-    if (VertexShaderStream.is_open()) {
-        std::string Line = "";
-        while (getline(VertexShaderStream, Line))
-            code += "\n" + Line;
-        VertexShaderStream.close();
-    }
-    else {
-        printf("Impossible to open %s. Are you in the right directory ? Don't forget to read the FAQ !\n", path);
-        getchar();
-        return 0;
-    }
-    GLint result;
-    int logLength;
-
-    const char* vertexSource = code.c_str();
-
-    //Set the source code for the new shader to the newly read source
-    glShaderSource(shaderID, 1, &vertexSource, NULL);
-
-    //Compile the shader
-    glCompileShader(shaderID);
-
-    // get GL_COMPILE_STATUS (status code) from shaderID and store in result
-    glGetShaderiv(shaderID, GL_COMPILE_STATUS, &result);
-    // get GL_INFO_LOG_LENGTH (length of log for given shader
-    glGetShaderiv(shaderID, GL_INFO_LOG_LENGTH, &logLength);
-
-    if (logLength > 0) {
-        std::vector<char> FragmentShaderErrorMessage(logLength + 1);
-        glGetShaderInfoLog(shaderID, logLength, NULL, &FragmentShaderErrorMessage[0]);
-        printf("%s\n", &FragmentShaderErrorMessage[0]);
-    }
-    return shaderID;
-}
-
-GLuint linkShaders(std::vector<GLuint> shaders) {
-    //Initialize a new program
-    GLuint program = glCreateProgram();
-
-    //Attach each of the given shaders to the program
-    for (int i = 0; i < shaders.size(); i++) {
-        glAttachShader(program, shaders[i]);
-    }
-
-    //Link the program with the attached shaders
-    glLinkProgram(program);
-
-    int result;
-    int logLength;
-
-    // Get link status code and info log length
-    glGetProgramiv(program, GL_LINK_STATUS, &result);
-    glGetProgramiv(program, GL_INFO_LOG_LENGTH, &logLength);
-
-    //Print errors if any
-    if (logLength > 0) {
-        std::vector<char> msg(logLength + 1);
-        glGetProgramInfoLog(program, logLength, NULL, &msg[0]);
-        printf("%s\n", &msg[0]);
-    }
-
-    //Detach and delete shaders from the program object, effects will
-    // not come into effect until program is relinked
-    for (int i = 0; i < shaders.size(); i++) {
-        glDetachShader(program, shaders[i]);
-        glDeleteShader(shaders[i]);
-    }
-    
-
-    return program;
-}
 
 #pragma region Highway generation
 std::vector<Highway> genTicTacToe()
@@ -152,7 +73,11 @@ std::vector<Highway> genLines()
         Point p1;
         Point p2;
 
-        p1.x = ((float)(rand() % 2000) / 1000.0f) - 1.0f;
+		//Limit placements of highways to the ith TOTAL_LENGTH / NUM_VERTICAL_HIGHWAYS length stretch of the road
+		float min = -1.0f + ( (1.0f - (-1.0f)) * i) / NUM_VERTICAL_HIGHWAYS;
+		float max = -1.0f + ( (1.0f - (-1.0f)) * (i + 1)) / NUM_VERTICAL_HIGHWAYS;
+
+		p1.x = randRange(min, max);
         p1.y = -1.0f;
 
         if (((rand() % 1000) / 1000.0f) < HIGHWAY_TAXI_FACTOR)
@@ -161,7 +86,7 @@ std::vector<Highway> genLines()
         }
         else
         {
-            p2.x = ((float)(rand() % 2000) / 1000.0f) - 1.0f;
+			p2.x = randRange(min, max);
         }
         
         p2.y = 1.0f;
@@ -176,7 +101,11 @@ std::vector<Highway> genLines()
         Point p1;
         Point p2;
 
-        p1.y = ((float)(rand() % 2000) / 1000.0f) - 1.0f;
+		//Limit placements of highways to the ith TOTAL_LENGTH / NUM_VERTICAL_HIGHWAYS length stretch of the road
+		float min = ( (1.0f - (-1.0f)) * i) / NUM_HORIZONTAL_HIGHWAYS;
+		float max = ( (1.0f - (-1.0f)) * (i + 1)) / NUM_HORIZONTAL_HIGHWAYS;
+
+		p1.y = randRange(min, max);
         p1.x = -1.0f;
 
         if (((rand() % 1000) / 1000.0f) < HIGHWAY_TAXI_FACTOR)
@@ -185,7 +114,7 @@ std::vector<Highway> genLines()
         }
         else
         {
-            p2.y = ((float)(rand() % 2000) / 1000.0f) - 1.0f;
+            p2.y = randRange(min, max);
         }
 
         p2.x = 1.0f;
@@ -769,22 +698,6 @@ int main(int argc, char** argv)
         exit(-1);
     }
 
-    GLuint* aa = &vertexArrayID;
-    glGenVertexArrays(1, aa);
-    glBindVertexArray(vertexArrayID);
-
-    glGenBuffers(1, &vertexBuffer);
-    glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
-
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-
-    //Load shaders and link a program
-//    std::vector<GLuint> shaders;
-//    shaders.push_back(loadShader("vertex.glsl", GL_VERTEX_SHADER));
-//    shaders.push_back(loadShader("fragment.glsl", GL_FRAGMENT_SHADER));
-//    GLuint program = linkShaders(shaders);
-
-
     lines = genLines();
  //   lines = genOffshoots(lines);
     
@@ -799,11 +712,20 @@ int main(int argc, char** argv)
     
 
     for (int i = 0; i < chunks.size(); i++) {
-        std::vector<mPolygon> newLines = chunks[i].addRoundabout();
-        for (int j = 0; j < newLines.size(); j++) {
-            std::vector<mPolygon> newBlock = (newLines[j].iceLatticeSplit());
-            blocks.insert(blocks.end(), newBlock.begin(), newBlock.end());
-        }
+
+		if (i % 2) {
+			std::vector<mPolygon> newLines = chunks[i].addRoundabout();
+			for (int j = 0; j < newLines.size(); j++) {
+				std::vector<mPolygon> newBlock = (newLines[j].iceLatticeSplit());
+				blocks.insert(blocks.end(), newBlock.begin(), newBlock.end());
+			}
+			//blocks.insert(blocks.end(), newLines.begin(), newLines.end());
+		}
+
+		else {
+			//TODO: New-York-Ize the chunk instead
+			std::vector<Highway> newYorkChunk = getVerticalStreets(chunks[i]);
+		}
     }
 
     //for (int i = 0; i < chunks.size(); i++) {

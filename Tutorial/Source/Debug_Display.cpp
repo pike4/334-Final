@@ -13,9 +13,9 @@ void markIntersections(std::vector<Point> it)
     for (int i = 0; i < it.size(); i++)
     {
         Point p = it[i];
-        glVertex2f(p.x, p.y + 0.02);
-        glVertex2f(p.x - 0.02, p.y - 0.01);
-        glVertex2f(p.x + 0.02, p.y - 0.01);
+        glVertex2f(p.x, p.y + 0.01);
+        glVertex2f(p.x - 0.01, p.y - 0.005);
+        glVertex2f(p.x + 0.01, p.y - 0.005);
     }
     glEnd();
 }

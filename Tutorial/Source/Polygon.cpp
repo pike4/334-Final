@@ -83,9 +83,10 @@ std::vector<mPolygon> mPolygon::addRoundabout()
         bullshitLines.push_back(Line(center, Point(newX, newY)));
 
         float len = cur.length();
-        if (len > 0.3)
+        if (len > 0.2)
         {
-            ret.push_back(Line(center, *per[i])); 
+            ret.push_back(Line(center, *per[i]));
+			bullshitLines.push_back(Line(center, *per[i]));
             ints.push_back(*per[i]);
         }
         ints.push_back(Point(newX, newY));
@@ -96,6 +97,8 @@ std::vector<mPolygon> mPolygon::addRoundabout()
         curr.push_back(new Intercept(center.x, center.y));
         curr.push_back(new Intercept(ints[i].x, ints[i].y));
         curr.push_back(new Intercept(ints[(i + 1) % ints.size()].x, ints[(i + 1) % ints.size()].y));
+
+
         rett.push_back(curr);
     }
     
@@ -202,7 +205,7 @@ std::vector<mPolygon> mPolygon::iceRecurse(mPolygon cur) {
     std::vector<mPolygon> res = cur.split();
 
     for (int i = 0; i < res.size(); i++) {
-        if (res[i].area() > 0.1) {
+        if (res[i].area() > 0.01) {
             //Push back of recursing on either half
             std::vector<mPolygon> splitted = iceRecurse(res[i]);
             ret.insert(ret.end(), splitted.begin(), splitted.end());
