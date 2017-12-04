@@ -35,5 +35,8 @@
     <ClInclude Include="Source\Streets.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Source\Polygon.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

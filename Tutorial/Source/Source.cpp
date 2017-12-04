@@ -2,6 +2,7 @@
 #include "glut.h"
 #include "Geometry.h"
 #include "Debug_Display.h"
+#include "Polygon.h"
 #include <string>
 #include <iostream>
 #include <vector>
@@ -27,10 +28,10 @@ static const GLfloat vertices[] =
 };
 
 const int NUM_VERTICAL_HIGHWAYS = 1;
-const int NUM_HORIZONTAL_HIGHWAYS = 2;
+const int NUM_HORIZONTAL_HIGHWAYS = 1;
 const int NUM_MID_STREETS = 2;
 
-const float STREET_WIDTH = 0.1;
+const float STREET_WIDTH = 0.15;
 
 // Likelihood that a given highway will be parallel to an axis rather than at an angle
 const float HIGHWAY_TAXI_FACTOR = 0.0;
@@ -221,27 +222,6 @@ std::vector<Highway> genOffshoots(std::vector<Highway> orig)
         newX = 1.0;
         newY = endX * slope + newB;
 
-        //for (int j = 0; j < orig.size(); j++)
-        //{
-        //    if (j == ind) { continue; }
-        //
-        //    Point cur = orig[j].formula();
-        //
-        //    float factor = cur.m() / slope;
-        //    float newB = cur.b() - (offY * factor);
-        //    float a = 1 - factor;
-        //    newY = newB / a;
-        //    newX = (newY - offY) / offY;
-        //
-        //    if ((newX > std::min(orig[j].a.x, orig[j].b.x)) && ( newX < std::max(orig[j].a.x, orig[j].b.x) ) )
-        //    {
-        //        if (std::abs(newX - offX) < endX || endX == 0)
-        //        {
-        //            endX = newX;
-        //            endY = newY;
-        //        }
-        //    }
-        //}
         Point A = Point(offX, offY);
         Point B = Point(newX, newY);
         Highway newH = Highway(A, B);
@@ -269,9 +249,10 @@ std::vector<Point> getIntersections(std::vector<Highway>* linesToDo)
             Line l1 = (*linesToDo)[i];
             Line l2 = (*linesToDo)[j];
 
-            //Get slope intercept form describing line segments
+            //Get the point at which the lines defined by these line segments intersect
             Point f1 = l1.intercept(l2);
             
+            // Add a new intersection if the returned point exists and lies on both line segments
             if(l1.contains(f1) && l2.contains(f1)) {
                 Intercept* newIntercept = new Intercept(f1.x, f1.y, &(*linesToDo)[i], &(*linesToDo)[j]);
 
@@ -290,7 +271,7 @@ std::vector<Point> getIntersections(std::vector<Highway>* linesToDo)
 #pragma region Extract polygons
 /*
     origin - origin point of the polygon, return when current == current
-    polygon - the collection of points included in the polygon
+    polygon - the working collection of points included in the polygon
     current - the intercept to be checked
     whichLine - Each vertex corresponds to one side, so when we push back one vertex, switch to the other
                 line participating in the intercept, we pass this because we don't know where we came from
@@ -302,9 +283,22 @@ std::vector<Point> getIntersections(std::vector<Highway>* linesToDo)
 */
 bool polygonize(Intercept* origin, std::vector<Intercept*>* polygon, Intercept* current, Highway* whichLine, int turn)
 {
+    //These are the same actual intercept pointer
     if (current == origin)
     {
         return true;
+    }
+
+    //These both represent the same point but somehow it got copied?
+    // I suspect that this is happening because some lines appear far too close, and the algorithm is somehow
+    // "clipping" them together when they aren't actually a part of the same poly
+    //else if (((current->x - origin->x) < 0.00000001) && ((current->y - origin->y) < 0.00000001))
+    //{
+    //    return false;
+    //}
+    //This means a stack overflow is coming
+    else if (polygon->size() > 100) {
+        return false;
     }
 
     Intercept* prev = (*polygon)[polygon->size() - 1];
@@ -352,11 +346,13 @@ bool polygonize(Intercept* origin, std::vector<Intercept*>* polygon, Intercept* 
             return polygonize(origin, polygon, q1, other, turn);
         }
 
+        // q2 is not null, meaning the current intercept is not the last on this line
         else if (q2)
         {
             return polygonize(origin, polygon, q2, other, turn);
         }
 
+        // 
         else
         {
             return false;
@@ -477,6 +473,7 @@ std::vector<std::vector<Intercept*>> getPolygons(std::vector<Highway>* mLines)
 
 #pragma endregion
 
+#pragma region hats
 std::vector<Intercept*> getTopHat(std::vector<Intercept*> hull)
 {
     std::vector<Intercept*> topHat;
@@ -562,6 +559,7 @@ std::vector<Intercept*> getRightHat(std::vector<Intercept*> hull)
     topHat.push_back(hull[hull.size() - 1]);
     return topHat;
 }
+#pragma endregion
 
 //Get from the given vector the line that the given coordinate lies on
 Line getCorresponding(std::vector<Intercept*> hat, float value, char xy)
@@ -641,6 +639,7 @@ std::vector<Intercept*> rotateToRandom(std::vector<Intercept*> hull, float* retu
     return ret;
 }
 
+// 
 std::vector<Highway> getVerticalStreets(std::vector<Intercept*> hull)
 {
     std::vector<Highway> ret;
@@ -659,41 +658,39 @@ std::vector<Highway> getVerticalStreets(std::vector<Intercept*> hull)
     float pen = minX + STREET_WIDTH;
 
     std::vector<Point> roads;
+
     //Draw the "horizontal" roads
     while (pen < (maxX - STREET_WIDTH) )
     {
         Line topLine = getCorresponding(top, pen, 'x');
-        Point topF = topLine.formula();
         Line bottomLine = getCorresponding(bottom, pen, 'x');
-        Point bottomF = bottomLine.formula();
 
-        float topY = topF.m() * pen + topF.b();
-        float bottomY = bottomF.m() * pen + bottomF.b();
+        float topY = topLine.yIntercept(pen);
+        float bottomY = bottomLine.yIntercept(pen);
 
         roads.push_back(Point(pen, topY));
         roads.push_back(Point(pen, bottomY));
+
         pen += STREET_WIDTH;
     }
 
-    //
+    // Sort the points of the hull by y value, get the top and bottom points, and set the pen
     std::sort(rotated.begin(), rotated.end(), sortInterceptY);
     float minY = rotated[0]->y;
     float maxY = rotated[rotated.size() - 1]->y;
-
     pen = minY + STREET_WIDTH;
 
     while (pen < (maxY - STREET_WIDTH))
     {
         Line leftLine = getCorresponding(left, pen, 'y');
-        Point leftF = leftLine.formula();
         Line rightLine = getCorresponding(right, pen, 'y');
-        Point rightF = rightLine.formula();
 
-        float leftX = (pen - leftF.b()) / leftF.m();
-        float rightX = (pen - rightF.b()) / rightF.m();
+        float leftX = leftLine.xIntercept(pen);
+        float rightX = rightLine.xIntercept(pen);
 
         roads.push_back(Point(leftX, pen));
         roads.push_back(Point(rightX, pen));
+
         pen += STREET_WIDTH;
     }
 
@@ -715,7 +712,6 @@ std::vector<Highway> getVerticalStreets(std::vector<Intercept*> hull)
     {
         for (int i = 0; i < (roads.size() - 1); i += 2)
         {
-
             bullshitLines.push_back(Line(roads[i], roads[i + 1]));
             //streets.push_back(Highway(roads[i], roads[i + 1]));
             ret.push_back(Highway(roads[i], roads[i + 1]));
@@ -734,15 +730,6 @@ std::vector<Highway> getVerticalStreets(std::vector<Intercept*> hull)
         ret.push_back(Highway(Point(bott[i]->x, bott[i]->y), Point(bott[i + 1]->x, bott[i + 1]->y)));
     }
 
-    return ret;
-}
-
-std::vector<Line> getHorizontalStreets(std::vector<Intercept*> hull)
-{
-    std::vector<Line> ret;
-
-
-       
     return ret;
 }
 
@@ -769,62 +756,75 @@ std::vector<std::vector<Highway>> genSubStreets()
     return ret;
 }
 
-void splitPolygons() {
+std::vector<std::vector<Intercept*>> splitInHalf(std::vector<Intercept*> toSplit) {
+
+    std::vector<std::vector<Intercept*>> ret;
+
+    std::vector<Intercept*> top = getTopHat(toSplit);
+    std::vector<Intercept*> bottom = getBottomHat(toSplit);
+
+    // Select a random line segment from the top and bottom hull
+    int ind1 = (rand() % (top.size() - 1));
+    int ind2 = (rand() % (bottom.size() - 1));
+
+    // Select a random point on the top and bottom lines
+    float offX = top[ind1]->x + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (top[ind1 + 1]->x - top[ind1]->x)));
+    float offX2 = bottom[ind2]->x + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (bottom[ind2 + 1]->x - bottom[ind2]->x)));
+
+    //
+    Line topLine = getCorresponding(top, offX, 'x');
+    Line bottomLine = getCorresponding(bottom, offX2, 'x');
+
+    float offY = topLine.yIntercept(offX);
+    float offY2 = bottomLine.yIntercept(offX2);
+
+    std::vector<Intercept*> split1;
+    std::vector<Intercept*> split2;
+
+    Intercept* i1 = new Intercept(offX, offY);
+    Intercept* i2 = new Intercept(offX2, offY2);
+
+    Line divider = Line(Point(offX, offY), Point(offX2, offY2));
+    Point pp = divider.formula();
+
+    split1.push_back(i1);
+    split2.push_back(i1);
+    split1.push_back(i2);
+    split2.push_back(i2);
+
+    for (int j = 0; j < toSplit.size(); j++)
+    {
+        if (toSplit[j]->y > toSplit[j]->x * pp.m() + pp.b())
+        {
+            split1.push_back(toSplit[j]);
+        }
+        else
+        {
+            split2.push_back(toSplit[j]);
+        }
+    }
+    ret.push_back(split1);
+    ret.push_back(split2);
+
+    lines.push_back(Highway(Point(offX, offY), Point(offX2, offY2)));
+
+    return ret;
+}
+
+std::vector<std::vector<Intercept*>> splitPolygons(std::vector<std::vector<Intercept*>> chunkSet) {
 
     for (int i = 0; i < NUM_MID_STREETS; i++)
     {
-        int ind = rand() % chunks.size();
-        std::vector<Intercept*> toSplit = chunks[ind];
-        chunks.erase(chunks.begin() + ind);
+        int ind = rand() % chunkSet.size();
+        std::vector<Intercept*> toSplit = chunkSet[ind];
+        chunkSet.erase(chunkSet.begin() + ind);
 
-        std::vector<Intercept*> top = getTopHat(toSplit);
-        std::vector<Intercept*> bottom = getBottomHat(toSplit);
-
-        int ind1 = (rand() % (top.size() - 1));
-        int ind2 = (rand() % (bottom.size() - 1));
-
-        float offX = top[ind1]->x + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (top[ind1 + 1]->x - top[ind1]->x)));
-        float offX2 = bottom[ind2]->x + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (bottom[ind2 + 1]->x - bottom[ind2]->x)));
-
-        Line topLine = getCorresponding(top, offX, 'x');
-        Line bottomLine = getCorresponding(bottom, offX2, 'x');
-
-        Point f1 = topLine.formula();
-        Point f2 = bottomLine.formula();
-
-        float offY = f1.m() * offX + f1.b();
-        float offY2 = f2.m() * offX2 + f2.b();
-
-        std::vector<Intercept*> split1;
-        std::vector<Intercept*> split2;
-
-        Intercept* i1 = new Intercept(offX, offY);
-        Intercept* i2 = new Intercept(offX2, offY2);
-
-        Line divider = Line(Point(offX, offY), Point(offX2, offY2));
-        Point pp = divider.formula();
-
-        split1.push_back(i1);
-        split2.push_back(i1);
-        split1.push_back(i2);
-        split2.push_back(i2);
-
-        for (int j = 0; j < toSplit.size(); j++)
-        {
-            if (toSplit[j]->y > toSplit[j]->x * pp.m() + pp.b())
-            {
-                split1.push_back(toSplit[j]);
-            }
-            else
-            {
-                split2.push_back(toSplit[j]);
-            }
-        }
-        chunks.push_back(split1);
-        chunks.push_back(split2);
-
-        lines.push_back(Highway(Point(offX, offY), Point(offX2, offY2)));
+        std::vector<std::vector<Intercept*>> splitted = splitInHalf(toSplit);
+        
+        chunkSet.insert(chunkSet.end(), splitted.begin(), splitted.end());
     }
+
+    return chunkSet;
 }
 
 int main(int argc, char** argv)
@@ -878,7 +878,7 @@ int main(int argc, char** argv)
     intersections = getIntersections(&lines);
 
     chunks = getPolygons(&lines);
-    splitPolygons();
+    chunks = splitPolygons(chunks);
     streetSets = genSubStreets();
 
     std::vector<Point> streetInts;
@@ -932,8 +932,8 @@ int main(int argc, char** argv)
         drawChunks(blocks);
 
         glColor3f(1, 0, 0);
-        markIntersections(streetInts);
-        markIntersections(intersections);
+      //  markIntersections(streetInts);
+      //  markIntersections(intersections);
         
         glBegin(GL_LINES);
         

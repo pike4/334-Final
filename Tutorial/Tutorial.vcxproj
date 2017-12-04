@@ -123,6 +123,7 @@
   <ItemGroup>
     <ClInclude Include="Source\Debug_Display.h" />
     <ClInclude Include="Source\Geometry.h" />
+    <ClInclude Include="Source\Polygon.h" />
     <ClInclude Include="Source\Streets.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

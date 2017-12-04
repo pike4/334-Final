@@ -133,11 +133,42 @@ public:
         }
     }
 
+    // Get the x value of this line at the given 
+    float xIntercept(float otherY) {
+        Point f = formula();
+
+        return ( otherY - f.b() ) / f.m();
+    }
+
+    // Get the y value of line defined by this segment at the given x coordinate
+    float yIntercept(float otherX) {
+        Point f = formula();
+
+        return (f.m() * otherX) + f.b();
+    }
+
+    // True if the given point is within the domain and range of this segment
     bool contains(Point other) {
         bool b1 = (std::min(a.x, b.x) < (other.x + 0.001) );
         bool b2 = (std::max(a.x, b.x) > (other.x - 0.001) );
 
         return (b1 && b2 && !other.isInf());
+    }
+
+    //True if the given x coordinate is within the domain of this segment
+    bool containsX(float otherX) {
+        bool b1 = (std::min(a.x, b.x) < (otherX + 0.001));
+        bool b2 = (std::max(a.x, b.x) > (otherX - 0.001));
+
+        return (b1 && b2);
+    }
+
+    //True if the given y coordinate is within the range of this segment
+    bool containsY(float otherY) {
+        bool b1 = (std::min(a.y, b.y) < (otherY + 0.001));
+        bool b2 = (std::max(a.y, b.y) > (otherY - 0.001));
+
+        return (b1 && b2);
     }
 
     Point a;
@@ -188,7 +219,6 @@ public:
         std::sort(intercepts.begin(), intercepts.end(), sortInterceptX);
     }
 };
-
 
 
 class Solid
