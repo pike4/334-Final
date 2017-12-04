@@ -14,8 +14,9 @@ std::vector<Highway> lines;
 std::vector<Highway> streets;
 std::vector<std::vector<Highway>> streetSets;
 
-std::vector< std::vector<Intercept*> > chunks;
+std::vector< mPolygon > chunks;
 
+std::vector<Point> streetInts;
 std::vector<Point> intersections;
 
 std::vector<Line> bullshitLines;
@@ -27,7 +28,7 @@ static const GLfloat vertices[] =
     0.0f, 1.0f, 0.0f
 };
 
-const int NUM_VERTICAL_HIGHWAYS = 1;
+const int NUM_VERTICAL_HIGHWAYS = 0;
 const int NUM_HORIZONTAL_HIGHWAYS = 1;
 const int NUM_MID_STREETS = 2;
 
@@ -208,7 +209,7 @@ std::vector<Highway> genOffshoots(std::vector<Highway> orig)
         float minX = std::min(orig[ind].a.x, orig[ind].b.x);
         float maxX = std::max(orig[ind].a.x, orig[ind].b.x);
 
-        float offX = minX + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (maxX - minX)));
+        float offX = randRange(minX, maxX);
         float offY = offX * form.m() + form.b();
 
         float endX = 0;
@@ -382,9 +383,9 @@ bool polygonize(Intercept* origin, std::vector<Intercept*>* polygon, Intercept* 
     return false;
 }
 
-std::vector<std::vector<Intercept*>> getPolygons(std::vector<Highway>* mLines)
+std::vector<mPolygon> getPolygons(std::vector<Highway>* mLines)
 {
-    std::vector<std::vector<Intercept*>> ret;
+    std::vector<mPolygon> ret;
     //This won't work unless the points are ordered geometrically
     for (int i = 0; i < mLines->size(); i++)
     {
@@ -410,7 +411,7 @@ std::vector<std::vector<Intercept*>> getPolygons(std::vector<Highway>* mLines)
                 bool add1 = true;
                 for (int i = 0; i < ret.size(); i++)
                 {
-                    if (ret[i].size() == vertices1.size())
+                    if (ret[i].vertices.size() == vertices1.size())
                     {
                         bool add = false;
                         for (int j = 0; j < vertices1.size(); j++)
@@ -440,7 +441,7 @@ std::vector<std::vector<Intercept*>> getPolygons(std::vector<Highway>* mLines)
                 bool add1 = true;
                 for (int i = 0; i < ret.size(); i++)
                 {
-                    if (ret[i].size() == vertices2.size())
+                    if (ret[i].vertices.size() == vertices2.size())
                     {
                         bool add = false;
                         for (int j = 0; j < vertices2.size(); j++)
@@ -474,91 +475,7 @@ std::vector<std::vector<Intercept*>> getPolygons(std::vector<Highway>* mLines)
 #pragma endregion
 
 #pragma region hats
-std::vector<Intercept*> getTopHat(std::vector<Intercept*> hull)
-{
-    std::vector<Intercept*> topHat;
-    std::vector<Intercept*> topHat2;
 
-    std::sort(hull.begin(), hull.end(), sortInterceptX);
-
-    topHat.push_back(hull[0]);
-
-    Line topLine = Line(Point(hull[0]->x, hull[0]->y), Point(hull[hull.size() - 1]->x, hull[hull.size() - 1]->y));
-    Point topF = topLine.formula();
-    for (int i = 1; i < hull.size() - 1; i++)
-    {
-        if (hull[i]->y > ( (hull[i]->x * topF.m()) + topF.b()) )
-        {
-            topHat.push_back(hull[i]);
-        }
-    }
-    topHat.push_back(hull[hull.size() - 1]);
-
-    return topHat;
-}
-
-std::vector<Intercept*> getBottomHat(std::vector<Intercept*> hull)
-
-{
-    std::vector<Intercept*> topHat;
-
-    std::sort(hull.begin(), hull.end(), sortInterceptX);
-
-    topHat.push_back(hull[0]);
-    Line topLine = Line(Point(hull[0]->x, hull[0]->y), Point(hull[hull.size() - 1]->x, hull[hull.size() - 1]->y));
-    Point topF = topLine.formula();
-    for (int i = 1; i < hull.size() - 1; i++)
-    {
-        if (hull[i]->y  < ((hull[i]->x * topF.m()) + topF.b()))
-        {
-            topHat.push_back(hull[i]);
-        }
-    }
-    topHat.push_back(hull[hull.size() - 1]);
-    return topHat;
-}
-
-std::vector<Intercept*> getLeftHat(std::vector<Intercept*> hull)
-
-{
-    std::vector<Intercept*> topHat;
-
-    std::sort(hull.begin(), hull.end(), sortInterceptY);
-
-    topHat.push_back(hull[0]);
-    Line topLine = Line(Point(hull[0]->x, hull[0]->y), Point(hull[hull.size() - 1]->x, hull[hull.size() - 1]->y));
-    Point topF = topLine.formula();
-    for (int i = 1; i < hull.size() - 1; i++)
-    {
-        if (hull[i]->x < ((hull[i]->y - topF.b()) / topF.m()))
-        {
-            topHat.push_back(hull[i]);
-        }
-    }
-    topHat.push_back(hull[hull.size() - 1]);
-    return topHat;
-}
-
-std::vector<Intercept*> getRightHat(std::vector<Intercept*> hull)
-
-{
-    std::vector<Intercept*> topHat;
-
-    std::sort(hull.begin(), hull.end(), sortInterceptY);
-
-    topHat.push_back(hull[0]);
-    Line topLine = Line(Point(hull[0]->x, hull[0]->y), Point(hull[hull.size() - 1]->x, hull[hull.size() - 1]->y));
-    Point topF = topLine.formula();
-    for (int i = 1; i < hull.size() - 1; i++)
-    {
-        if (hull[i]->x > ((hull[i]->y - topF.b()) / topF.m()))
-        {
-            topHat.push_back(hull[i]);
-        }
-    }
-    topHat.push_back(hull[hull.size() - 1]);
-    return topHat;
-}
 #pragma endregion
 
 //Get from the given vector the line that the given coordinate lies on
@@ -640,20 +557,20 @@ std::vector<Intercept*> rotateToRandom(std::vector<Intercept*> hull, float* retu
 }
 
 // 
-std::vector<Highway> getVerticalStreets(std::vector<Intercept*> hull)
+std::vector<Highway> getVerticalStreets(mPolygon hull)
 {
     std::vector<Highway> ret;
     float angle, ox, oy;
-    std::vector<Intercept*> rotated = rotateToRandom(hull, &angle, &ox, &oy);
-    std::vector<Intercept*> top = getTopHat(rotated);
-    std::vector<Intercept*> bottom = getBottomHat(rotated);
-    std::vector<Intercept*> right = getRightHat(rotated);
-    std::vector<Intercept*> left = getLeftHat(rotated);
+    mPolygon rotated = rotateToRandom(hull, &angle, &ox, &oy);
+    mPolygon top = rotated.topHat();
+    mPolygon bottom = rotated.bottomHat();
+    mPolygon right = rotated.rightHat();
+    mPolygon left = rotated.leftHat();
 
-    std::sort(rotated.begin(), rotated.end(), sortInterceptX);
+    std::sort(rotated.vertices.begin(), rotated.vertices.end(), sortInterceptX);
 
     float minX = rotated[0]->x;
-    float maxX = rotated[rotated.size() - 1]->x;
+    float maxX = rotated[rotated.vertices.size() - 1]->x;
 
     float pen = minX + STREET_WIDTH;
 
@@ -675,9 +592,9 @@ std::vector<Highway> getVerticalStreets(std::vector<Intercept*> hull)
     }
 
     // Sort the points of the hull by y value, get the top and bottom points, and set the pen
-    std::sort(rotated.begin(), rotated.end(), sortInterceptY);
+    std::sort(rotated.vertices.begin(), rotated.vertices.end(), sortInterceptY);
     float minY = rotated[0]->y;
-    float maxY = rotated[rotated.size() - 1]->y;
+    float maxY = rotated[rotated.vertices.size() - 1]->y;
     pen = minY + STREET_WIDTH;
 
     while (pen < (maxY - STREET_WIDTH))
@@ -718,8 +635,8 @@ std::vector<Highway> getVerticalStreets(std::vector<Intercept*> hull)
         }
     }
 
-    std::vector<Intercept*> topp = getTopHat(hull);
-    std::vector<Intercept*> bott = getBottomHat(hull);
+    std::vector<Intercept*> topp = hull.topHat();
+    std::vector<Intercept*> bott = hull.bottomHat();
 
     for (int i = 0; i < topp.size() - 1; i++)
     {
@@ -738,7 +655,7 @@ std::vector<std::vector<Highway>> genSubStreets()
     std::vector<std::vector<Highway>> ret;
     for (int i = 0; i < chunks.size(); i++)
     {
-        std::vector<Intercept*> hull = chunks[i];
+        mPolygon hull = chunks[i];
         ////std::vector<Intercept*> topHat = getTopHat(hull);
         ////std::vector<Intercept*> topHat = getBottomHat(hull);
         //for (int j = 0; j < topHat.size() - 1; j++)
@@ -748,7 +665,7 @@ std::vector<std::vector<Highway>> genSubStreets()
 
         //  //  bullshitLines.push_back(Line(a, b));
         //}
-        std::vector<Highway> streetSet = getVerticalStreets(hull);
+        std::vector<Highway> streetSet = getVerticalStreets(hull.vertices);
 
         int a = 0;
         ret.push_back(streetSet);
@@ -756,20 +673,20 @@ std::vector<std::vector<Highway>> genSubStreets()
     return ret;
 }
 
-std::vector<std::vector<Intercept*>> splitInHalf(std::vector<Intercept*> toSplit) {
+std::vector<mPolygon> splitInHalf(mPolygon toSplit) {
 
-    std::vector<std::vector<Intercept*>> ret;
+    std::vector<mPolygon> ret;
 
-    std::vector<Intercept*> top = getTopHat(toSplit);
-    std::vector<Intercept*> bottom = getBottomHat(toSplit);
+    std::vector<Intercept*> top = toSplit.topHat();
+    std::vector<Intercept*> bottom = toSplit.bottomHat();
 
     // Select a random line segment from the top and bottom hull
     int ind1 = (rand() % (top.size() - 1));
     int ind2 = (rand() % (bottom.size() - 1));
 
     // Select a random point on the top and bottom lines
-    float offX = top[ind1]->x + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (top[ind1 + 1]->x - top[ind1]->x)));
-    float offX2 = bottom[ind2]->x + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (bottom[ind2 + 1]->x - bottom[ind2]->x)));
+    float offX = randRange(top[ind1]->x, top[ind1 + 1]->x);
+    float offX2 = randRange(top[ind2]->x, top[ind2 + 1]->x);
 
     //
     Line topLine = getCorresponding(top, offX, 'x');
@@ -792,7 +709,7 @@ std::vector<std::vector<Intercept*>> splitInHalf(std::vector<Intercept*> toSplit
     split1.push_back(i2);
     split2.push_back(i2);
 
-    for (int j = 0; j < toSplit.size(); j++)
+    for (int j = 0; j < toSplit.vertices.size(); j++)
     {
         if (toSplit[j]->y > toSplit[j]->x * pp.m() + pp.b())
         {
@@ -811,15 +728,15 @@ std::vector<std::vector<Intercept*>> splitInHalf(std::vector<Intercept*> toSplit
     return ret;
 }
 
-std::vector<std::vector<Intercept*>> splitPolygons(std::vector<std::vector<Intercept*>> chunkSet) {
+std::vector<mPolygon> splitPolygons(std::vector<mPolygon> chunkSet) {
 
     for (int i = 0; i < NUM_MID_STREETS; i++)
     {
         int ind = rand() % chunkSet.size();
-        std::vector<Intercept*> toSplit = chunkSet[ind];
+        mPolygon toSplit = chunkSet[ind];
         chunkSet.erase(chunkSet.begin() + ind);
 
-        std::vector<std::vector<Intercept*>> splitted = splitInHalf(toSplit);
+        std::vector<mPolygon> splitted = splitInHalf(toSplit);
         
         chunkSet.insert(chunkSet.end(), splitted.begin(), splitted.end());
     }
@@ -878,22 +795,46 @@ int main(int argc, char** argv)
     intersections = getIntersections(&lines);
 
     chunks = getPolygons(&lines);
-    chunks = splitPolygons(chunks);
-    streetSets = genSubStreets();
-
-    std::vector<Point> streetInts;
-    std::vector<std::vector<Intercept*>> blocks;
-
+    std::vector<mPolygon> blocks;
     
 
-    for (int i = 0; i < streetSets.size(); i++)
-    {
-        std::vector<Point> cur = getIntersections(&streetSets[i]);
-        std::vector<std::vector<Intercept*>> curChunks = getPolygons(&streetSets[i]);
-
-        blocks.insert(blocks.begin(), curChunks.begin(), curChunks.end());
-        streetInts.insert(streetInts.begin(), cur.begin(), cur.end());
+    for (int i = 0; i < chunks.size(); i++) {
+        std::vector<mPolygon> newLines = chunks[i].addRoundabout();
+        for (int j = 0; j < newLines.size(); j++) {
+            std::vector<mPolygon> newBlock = (newLines[j].iceLatticeSplit());
+            blocks.insert(blocks.end(), newBlock.begin(), newBlock.end());
+        }
     }
+
+    //for (int i = 0; i < chunks.size(); i++) {
+    //    streetInts.push_back(chunks[i].centroid());
+    //
+    //    std::vector<mPolygon> newBlock = (chunks[i].iceLatticeSplit());
+    //    //blocks.insert(blocks.end(), newBlock.begin(), newBlock.end());
+    //    //streetInts.push_back(chunks[i].split());
+    //}
+
+    //chunks = splitPolygons(chunks);
+    //streetSets = genSubStreets();
+    //
+    //
+    //
+    //
+    //
+    //for (int i = 0; i < streetSets.size(); i++)
+    //{
+    //    std::vector<Point> cur = getIntersections(&streetSets[i]);
+    //    std::vector<mPolygon> curChunks = getPolygons(&streetSets[i]);
+    //
+    //    blocks.insert(blocks.begin(), curChunks.begin(), curChunks.end());
+    //    streetInts.insert(streetInts.begin(), cur.begin(), cur.end());
+    //}
+    //
+    //streetInts.clear();
+    //
+    //for (int i = 0; i < blocks.size(); i++) {
+    //    streetInts.push_back(blocks[i].centroid());
+    //}
 
     while (1) 
     {
@@ -929,10 +870,10 @@ int main(int argc, char** argv)
         
         //drawChunks(chunks);
 
-        drawChunks(blocks);
+      //  drawChunks(blocks);
 
         glColor3f(1, 0, 0);
-      //  markIntersections(streetInts);
+        markIntersections(streetInts);
       //  markIntersections(intersections);
         
         glBegin(GL_LINES);

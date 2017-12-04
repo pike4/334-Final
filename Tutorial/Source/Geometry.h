@@ -171,6 +171,30 @@ public:
         return (b1 && b2);
     }
 
+    //Return minimum x value of this line segment
+    float minX() {
+        return std::min(a.x, b.x);
+    }
+
+    //Return maximum x value of this line segment
+    float maxX() {
+        return std::max(a.x, b.x);
+    }
+
+    //Return minimum y value of this line segment
+    float minY() {
+        return std::min(a.y, b.y);
+    }
+
+    //Return maximum y value of this line segment
+    float maxY() {
+        return std::max(a.y, b.y);
+    }
+
+    float length() {
+        return sqrt(pow(maxX() - minX(), 2) + pow(maxY() - minY(), 2));
+    }
+
     Point a;
     Point b;
 };
@@ -241,6 +265,10 @@ class Building
     Solid boundingBox;
 };
 
+class mPolygon;
+
+float randRange(float min, float max);
+
 extern std::vector<Highway> lines;
-extern std::vector< std::vector<Intercept*> > chunks;
+extern std::vector< mPolygon > chunks;
 extern std::vector<Point> intersections;

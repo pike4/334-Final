@@ -3,6 +3,7 @@
 #include <random>
 #include <time.h>
 #include "Geometry.h"
+#include "Polygon.h"
 
 void markIntersections(std::vector<Point> it)
 {
@@ -19,7 +20,7 @@ void markIntersections(std::vector<Point> it)
     glEnd();
 }
 
-void drawChunks(std::vector<std::vector<Intercept*>> cur)
+void drawChunks(std::vector<mPolygon> cur)
 {
     // Draw the chunks
     for (int i = 0; i < cur.size(); i++)
@@ -32,7 +33,7 @@ void drawChunks(std::vector<std::vector<Intercept*>> cur)
 
         glColor3f(c[0], c[1], c[2]);
 
-        for (int j = 0; j < cur[i].size(); j++)
+        for (int j = 0; j < cur[i].vertices.size(); j++)
         {
             glVertex2f(cur[i][j]->x, cur[i][j]->y);
         }

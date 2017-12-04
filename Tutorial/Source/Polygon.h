@@ -1,15 +1,48 @@
 #pragma once
 #include "Geometry.h"
 
-class Polygon {
-
+class mPolygon {
+public:
     std::vector<Intercept*> vertices;
 
-    Polygon(std::vector<Intercept*> v) {
+    mPolygon (std::vector<Intercept*> v) {
         vertices = v;
+    }
+
+    mPolygon(const mPolygon& other)
+    {
+        vertices = other.vertices;
     }
 
     Intercept* operator[](int i) {
         return vertices[i];
     }
+    
+    operator std::vector<Intercept*>() {
+        return vertices;
+    }
+
+    mPolygon topHat();
+    mPolygon bottomHat();
+    mPolygon leftHat();
+    mPolygon rightHat();
+
+    //Return this polygon's vertices a in clockwise or maybe counter-clockwise order
+    mPolygon perimiterOrdered();
+
+    //Return the area of the polygon
+    float area();
+
+    std::vector<mPolygon> addRoundabout();
+
+    //Return a vector of recursively split polygons until the minimum size is reached for each
+    std::vector<mPolygon> mPolygon::iceLatticeSplit();
+
+    //Recursive step of iceSplit
+    std::vector<mPolygon> mPolygon::iceRecurse(mPolygon cur);
+
+    //Return the two polygons resulting from splitting this along a random line through the centroid
+    std::vector<mPolygon> mPolygon::split();
+
+    Point centroid();
 };

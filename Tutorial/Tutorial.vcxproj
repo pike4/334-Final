@@ -117,6 +117,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Source\Debug_Display.cpp" />
+    <ClCompile Include="Source\Polygon.cpp" />
     <ClCompile Include="Source\Source.cpp" />
     <ClCompile Include="Source\Streets.cpp" />
   </ItemGroup>
