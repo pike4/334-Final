@@ -5,6 +5,8 @@
 #include "Geometry.h"
 #include "Polygon.h"
 
+#define RAND_COLOR_MODE 0
+
 void markIntersections(std::vector<Point> it)
 {
     // Mark intersection points
@@ -23,19 +25,31 @@ void markIntersections(std::vector<Point> it)
 void drawChunks(std::vector<mPolygon> cur)
 {
     // Draw the chunks
+	
     for (int i = 0; i < cur.size(); i++)
     {
         glBegin(GL_POLYGON);
 
         float c[3] = { 0, 0, 0 };
-        int q = i % 3;
-        c[q] = ((float)i / cur.size()) + 0.5;
+        
+		if (RAND_COLOR_MODE) {
+			c[0] = (float)(rand() % 1000) / 1000;
+			c[1] = (float)(rand() % 1000) / 1000;
+			c[2] = (float)(rand() % 1000) / 1000;
+		}
+
+		else {
+			int q = i % 3;
+			c[q] = ((float)i / cur.size()) + 0.5;
+		}
 
         glColor3f(c[0], c[1], c[2]);
 
-        for (int j = 0; j < cur[i].vertices.size(); j++)
+		std::vector<Intercept*> bl = cur[i].perimiterOrdered();
+
+        for (int j = 0; j < bl.size(); j++)
         {
-            glVertex2f(cur[i][j]->x, cur[i][j]->y);
+            glVertex2f(bl[j]->x, bl[j]->y);
         }
         glEnd();
     }

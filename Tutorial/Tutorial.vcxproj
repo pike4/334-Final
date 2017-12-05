@@ -116,12 +116,14 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Source\Building.cpp" />
     <ClCompile Include="Source\Debug_Display.cpp" />
     <ClCompile Include="Source\Polygon.cpp" />
     <ClCompile Include="Source\Source.cpp" />
     <ClCompile Include="Source\Streets.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Source\Building.h" />
     <ClInclude Include="Source\Debug_Display.h" />
     <ClInclude Include="Source\Geometry.h" />
     <ClInclude Include="Source\Polygon.h" />

@@ -3,6 +3,54 @@
 extern std::vector<Line> bullshitLines;
 extern std::vector<Point> streetInts;
 
+bool sortLineLength(Line i, Line j) {
+	return i.length() < j.length();
+}
+
+std::vector<Line> getAllConnections(std::vector<Point> points) {
+	std::vector<Line> ret;
+	for (int i = 0; i < points.size(); i++) {
+		for (int j = i + 1; j < points.size(); j++) {
+			ret.push_back(Line(points[i], points[j]));
+		}
+	}
+
+	return ret;
+}
+
+std::vector<Line> pairIntersections(std::vector<Point> a, std::vector<Point> b) {
+	std::vector<Line> ret;
+	for (int i = 0; i < a.size(); i++) {
+		for (int j = 0; j < b.size(); j++) {
+			ret.push_back(Line(a[i], b[j]));
+		}
+	}
+	//bullshitLines.insert(bullshitLines.begin(), ret.begin(), ret.end());
+	return ret;
+}
+
+//Return a list of lines from $connections such that the shortest lines are added back in order, where no longer lines cross any other lines
+std::vector<Line> filterIntersections(std::vector<Line> connections, std::vector<Line> ret) {
+	std::sort(connections.begin(), connections.end(), sortLineLength);
+	for (int i = 0; i < connections.size(); i++) {
+		bool good = true;
+
+		//Check each line against all lines already verified, only add it if it doesn't connect with any other line
+		for (int j = 0; j < ret.size(); j++) {
+			Point intercept = connections[i].intercept(ret[j]);
+			if (connections[i].crosses(intercept)) {
+				good = false;
+			}
+		}
+		if (good)
+		{
+			ret.push_back(connections[i]);
+		}
+	}
+
+	return ret;
+}
+
 mPolygon mPolygon::perimiterOrdered() {
 
     //Top and bottom hat are already perimeter ordered, bottom points come after top points
@@ -106,6 +154,66 @@ std::vector<mPolygon> mPolygon::addRoundabout()
     return rett;
 }
 
+std::vector<Line> mPolygon::addRoundabouts(int n) {
+	if (area() < 0.01) {
+		std::vector<Line> aa;
+		return aa;
+	}
+	Point center = centroid();
+	int tot = n;
+	if (n > vertices.size()) { n = vertices.size(); }
+	std::vector<Point> firstScatter;
+	std::vector<Point> hullPoints;
+	for (int i = 0; i < n; i++) {
+		float ratio = randRange(0.33, 0.66);
+
+		Point mA = Point(vertices[i]->x, vertices[i]->y);
+		Point mB = Point(vertices[(i+1)%vertices.size()]->x, vertices[(i + 1) % vertices.size()]->y);
+
+		Line mid = Line(mA, mB);
+
+		float min = mid.minX() + (mid.maxX() - mid.minX()) * 0.33;
+		float max = mid.minX() + (mid.maxX() - mid.minX()) * 0.66;
+
+		float x1 = randRange(min, max);
+		float y1 = mid.yIntercept(x1);
+
+		float newX = vertices[i]->x - ((vertices[i]->x - center.x) * (1 - ratio));
+		float newY = vertices[i]->y - ((vertices[i]->y - center.y) * (1 - ratio));
+
+		//Point cur = Point(vertices[i]->x - (center.x * (1- ratio)), vertices[i]->y - (center.y * (1-ratio)));
+		//
+		//cur.x *= (1 - ratio);
+		//cur.y *= (1 - ratio);
+		Point roundabout = Point(newX, newY);
+		Point r2 = Point(x1, y1);
+		streetInts.push_back(roundabout);
+		firstScatter.push_back(roundabout);
+		hullPoints.push_back(r2);
+		if (i < tot - n) {
+			streetInts.push_back(r2);
+			firstScatter.push_back(r2);
+		}
+	}
+	
+	for (int i = 0; i < vertices.size(); i++) {
+		hullPoints.push_back(Point(vertices[i]->x, vertices[i]->y));
+	}
+
+	std::vector<Line> connections = getAllConnections(firstScatter);
+
+	// Get a list of all connections between lines ascending by length
+	std::vector<Line> trueConnections;
+	trueConnections = filterIntersections(connections, trueConnections);
+	
+	std::vector<Line> otherConnections = pairIntersections(firstScatter, hullPoints);
+
+	std::vector<Line> fin = filterIntersections(otherConnections, trueConnections);
+
+
+	return fin;
+}
+
 #pragma region hats
 mPolygon mPolygon::topHat()
 {
@@ -205,11 +313,14 @@ std::vector<mPolygon> mPolygon::iceRecurse(mPolygon cur) {
     std::vector<mPolygon> res = cur.split();
 
     for (int i = 0; i < res.size(); i++) {
-        if (res[i].area() > 0.01) {
+        if (res[i].area() > 0.03) {
             //Push back of recursing on either half
             std::vector<mPolygon> splitted = iceRecurse(res[i]);
             ret.insert(ret.end(), splitted.begin(), splitted.end());
         }
+		else {
+			ret.insert(ret.end(), res.begin(), res.end());
+		}
     }
 
     return ret;
@@ -309,4 +420,92 @@ std::vector<mPolygon> mPolygon::split()
         ret.push_back(*this);
     }
     return ret;
+}
+
+mPolygon mPolygon::shrinkBlock(float ratio) {
+
+	std::vector<Intercept*> per = perimiterOrdered();
+	std::vector<Intercept*> ret;
+
+	Point center = centroid();
+
+	for (int i = 0; i < per.size(); i++) {
+		Point cur = Point(per[i]->x - center.x, per[i]->y - center.y);
+
+		cur.x *= (1 - ratio);
+		cur.y *= (1 - ratio);
+
+		ret.push_back(new Intercept(per[i]->x - cur.x, per[i]->y - cur.y));
+		streetInts.push_back(*ret[i]);
+	}
+
+	for (int i = 0; i < ret.size(); i++) {
+		Point a = *ret[i];
+		Point b = *ret[(i + 1) % ret.size()];
+
+		bullshitLines.push_back(Line(a, b));
+	}
+
+	return ret;
+}
+
+mPolygon mPolygon::getBufferedBlock(float offset) {
+	std::vector<Intercept*> per = perimiterOrdered();
+	std::vector<Intercept*> ret;
+
+	Point center = centroid();
+
+	for (int i = 0; i < per.size(); i++) {
+		float newX = 0;
+		float newY = 0;
+		if (per[i]->x > center.x) {
+			newX = per[i]->x - offset;
+			if (newX < center.x) {
+				ret.clear();
+				break;
+			}
+		}
+		else if (per[i]->x < center.x) {
+			newX = per[i]->x + offset;
+			if (newX > center.x) {
+				ret.clear();
+				break;
+			}
+		}
+		else {
+			int ff = 9;
+		}
+		if (per[i]->y > center.y) {
+			newY = per[i]->y - offset;
+			if (newY < center.y) {
+				ret.clear();
+				break;
+			}
+		}
+		else if (per[i]->y < center.y) {
+			newY = per[i]->y + offset;
+			if (newY > center.y) {
+				ret.clear();
+				break;
+			}
+		}
+		else {
+			int yyy = 0;
+		}
+
+		if (i == per.size() - 1) {
+			int why = 0;
+		}
+
+		ret.push_back(new Intercept(newX, newY));
+	}
+
+	for (int i = 0; i < ret.size(); i++) {
+		Point a = *ret[i];
+		Point b = *ret[(i + 1) % ret.size()];
+
+		bullshitLines.push_back(Line(a, b));
+	}
+
+	return ret;
 }

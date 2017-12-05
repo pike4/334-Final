@@ -155,6 +155,14 @@ public:
         return (b1 && b2 && !other.isInf());
     }
 
+	// True if the lines actually cross, false if they intersect at the endpoints
+	bool crosses(Point other) {
+		bool b1 = (minX() < (other.x - 0.001));
+		bool b2 = (maxX() > (other.x + 0.001));
+
+		return (b1 && b2 && !other.isInf());
+	}
+
     //True if the given x coordinate is within the domain of this segment
     bool containsX(float otherX) {
         bool b1 = (std::min(a.x, b.x) < (otherX + 0.001));
@@ -230,6 +238,7 @@ public:
 
 bool sortInterceptX(Intercept* i, Intercept* j);
 bool sortInterceptY(Intercept* i, Intercept* j);
+
 
 class Highway : public Line
 {

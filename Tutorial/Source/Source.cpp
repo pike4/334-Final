@@ -10,6 +10,9 @@
 #include <time.h>
 #include <cmath>
 
+#include <fstream>
+#include <iostream>
+
 std::vector<Highway> lines;
 std::vector<Highway> streets;
 std::vector<std::vector<Highway>> streetSets;
@@ -28,14 +31,55 @@ static const GLfloat vertices[] =
     0.0f, 1.0f, 0.0f
 };
 
-const int NUM_VERTICAL_HIGHWAYS = 2;
-const int NUM_HORIZONTAL_HIGHWAYS = 2;
+int NUM_VERTICAL_HIGHWAYS = 2;
+int NUM_HORIZONTAL_HIGHWAYS = 2;
+float MIN_BLOCK_AREA = 0.01;
 const int NUM_MID_STREETS = 2;
 
 const float STREET_WIDTH = 0.15;
 
 // Likelihood that a given highway will be parallel to an axis rather than at an angle
 const float HIGHWAY_TAXI_FACTOR = 0.0;
+
+struct Rule {
+	float minSize;
+	int depth;
+	char rule;
+};
+
+std::vector<Rule> readRules() {
+	std::ifstream inFile;
+	std::vector<Rule> ret;
+
+	inFile.open("grammar.txt");
+
+	std::string line1, line2;
+
+	float minSize;
+	int h, v;
+	char cur;
+	while (inFile.good()) {
+		inFile >> cur;
+		Rule newRule;
+		if (cur == 'H') {
+			inFile >> NUM_HORIZONTAL_HIGHWAYS;
+		}
+		else if (cur == 'V') {
+			inFile >> NUM_VERTICAL_HIGHWAYS;
+		}
+		else if (cur == 'A') {
+			inFile >> MIN_BLOCK_AREA;
+		}
+		else if( cur == 'R' || cur == 'I' || cur == 'M' || cur == 'B') {
+			newRule.rule = cur;
+			inFile >> newRule.depth;
+			inFile >> cur;
+			inFile >> newRule.minSize;
+			ret.push_back(newRule);
+		}
+	}
+	return ret;
+}
 
 #pragma region Highway generation
 std::vector<Highway> genTicTacToe()
@@ -673,11 +717,43 @@ std::vector<mPolygon> splitPolygons(std::vector<mPolygon> chunkSet) {
     return chunkSet;
 }
 
+std::vector<mPolygon> recurse(mPolygon cur, Rule rule) {
+	std::vector<mPolygon> ret;
+
+	// TODO: One roundabout
+	if (rule.rule == 'R') {
+		
+	}
+
+	// TODO: Ice ray split
+	else if (rule.rule == 'I') {
+
+	}
+
+	//TODO: convert to multiple roundabouts
+	else if (rule.rule == 'M') {
+
+	}
+
+	//TODO: return current chunk as blocks
+	else if (rule.rule == 'B') {
+
+	}
+
+	//If no rule can be applied, return the given poly
+	else {
+		ret.push_back(cur);
+	}
+
+	return ret;
+}
+
 int main(int argc, char** argv)
 {
     GLuint vertexArrayID = 0;
 
     GLuint vertexBuffer;
+	std::vector<Rule> rules = readRules();
 
     glutInit(&argc, argv);
 
@@ -699,7 +775,7 @@ int main(int argc, char** argv)
     }
 
     lines = genLines();
- //   lines = genOffshoots(lines);
+	//lines = genOffshoots(lines);
     
     std::vector<Highway> bounds = genBoundary();
 
@@ -709,24 +785,48 @@ int main(int argc, char** argv)
 
     chunks = getPolygons(&lines);
     std::vector<mPolygon> blocks;
+	std::vector<mPolygon> fin;
     
+	for (int i = 0; i < rules.size(); i++) {
+
+	}
 
     for (int i = 0; i < chunks.size(); i++) {
-
+	//	std::vector<Line> rounds = chunks[i].addRoundabouts(20);
+		streetInts.push_back(chunks[i].centroid());
 		if (i % 2) {
 			std::vector<mPolygon> newLines = chunks[i].addRoundabout();
+			
 			for (int j = 0; j < newLines.size(); j++) {
 				std::vector<mPolygon> newBlock = (newLines[j].iceLatticeSplit());
 				blocks.insert(blocks.end(), newBlock.begin(), newBlock.end());
+	
 			}
 			//blocks.insert(blocks.end(), newLines.begin(), newLines.end());
 		}
-
+	
 		else {
 			//TODO: New-York-Ize the chunk instead
 			std::vector<Highway> newYorkChunk = getVerticalStreets(chunks[i]);
+			getIntersections(&newYorkChunk);
+			std::vector<mPolygon> curNewYork = getPolygons(&newYorkChunk);
+			blocks.insert(blocks.end(), curNewYork.begin(), curNewYork.end());
 		}
+
+		
     }
+
+
+	//This shrinks all the blocks in the whole world
+	for (int i = 0; i < blocks.size(); i++) {
+	//	mPolygon subs = blocks[i].shrinkBlock(0.9);
+	
+		std::vector<Line> rounds = blocks[i].addRoundabouts(3);
+		bullshitLines.insert(bullshitLines.end(), rounds.begin(), rounds.end());
+		//if (subs.vertices.size() > 0) {
+		//	fin.push_back(subs);
+		//}
+	}
 
     //for (int i = 0; i < chunks.size(); i++) {
     //    streetInts.push_back(chunks[i].centroid());
@@ -790,9 +890,10 @@ int main(int argc, char** argv)
         glEnd();
         
         
-        //drawChunks(chunks);
+        drawChunks(chunks);
 
-      //  drawChunks(blocks);
+        drawChunks(blocks);
+		drawChunks(fin);
 
         glColor3f(1, 0, 0);
         markIntersections(streetInts);

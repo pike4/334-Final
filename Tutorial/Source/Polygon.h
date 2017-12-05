@@ -34,6 +34,7 @@ public:
     float area();
 
     std::vector<mPolygon> addRoundabout();
+	std::vector<Line>  addRoundabouts(int n);
 
     //Return a vector of recursively split polygons until the minimum size is reached for each
     std::vector<mPolygon> mPolygon::iceLatticeSplit();
@@ -43,6 +44,12 @@ public:
 
     //Return the two polygons resulting from splitting this along a random line through the centroid
     std::vector<mPolygon> mPolygon::split();
+
+	//Return a similar polygon such that the difference between each vertex and the centroid is linearly reduced by $offset
+	mPolygon mPolygon::getBufferedBlock(float offset);
+
+	//Return a similar polygon such that the difference between each vertex and the centroid is scaled by $ratio
+	mPolygon mPolygon::shrinkBlock(float ratio);
 
     Point centroid();
 };
