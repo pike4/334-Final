@@ -72,9 +72,9 @@ std::vector<Rule> readRules() {
 		}
 		else if( cur == 'R' || cur == 'I' || cur == 'M' || cur == 'B') {
 			newRule.rule = cur;
-			inFile >> newRule.depth;
-			inFile >> cur;
-			inFile >> newRule.minSize;
+			//inFile >> newRule.depth;
+			//inFile >> cur;
+			//inFile >> newRule.minSize;
 			ret.push_back(newRule);
 		}
 	}
@@ -717,32 +717,46 @@ std::vector<mPolygon> splitPolygons(std::vector<mPolygon> chunkSet) {
     return chunkSet;
 }
 
-std::vector<mPolygon> recurse(mPolygon cur, Rule rule) {
+std::vector<mPolygon> recurse(mPolygon cur, std::vector<Rule> rules) {
+	
 	std::vector<mPolygon> ret;
+	if (rules.size() == 0) {
+		return ret;
+	}
+
+	std::vector<Rule> next = std::vector<Rule>(rules.begin() + 1, rules.end());
+	std::vector<mPolygon> result;
 
 	// TODO: One roundabout
-	if (rule.rule == 'R') {
-		
+	if (rules[0].rule == 'R') {
+		result = cur.addRoundabout();
 	}
 
 	// TODO: Ice ray split
-	else if (rule.rule == 'I') {
-
+	else if (rules[0].rule == 'I') {
+		result = cur.split();
 	}
 
 	//TODO: convert to multiple roundabouts
-	else if (rule.rule == 'M') {
-
+	else if (rules[0].rule == 'M') {
+		
 	}
 
 	//TODO: return current chunk as blocks
-	else if (rule.rule == 'B') {
+	else if (rules[0].rule == 'B') {
 
 	}
 
-	//If no rule can be applied, return the given poly
-	else {
-		ret.push_back(cur);
+	for (int i = 0; i < result.size(); i++) {
+		std::vector<mPolygon> recurseResult = recurse(result[i], next);
+
+		if (recurseResult.size() > 0) {
+			ret.insert(ret.end(), recurseResult.begin(), recurseResult.end());
+		}
+
+		else {
+			ret.insert(ret.end(), result.begin(), result.end());
+		}
 	}
 
 	return ret;
@@ -775,7 +789,7 @@ int main(int argc, char** argv)
     }
 
     lines = genLines();
-	//lines = genOffshoots(lines);
+	
     
     std::vector<Highway> bounds = genBoundary();
 
@@ -784,49 +798,54 @@ int main(int argc, char** argv)
     intersections = getIntersections(&lines);
 
     chunks = getPolygons(&lines);
+
+	for (int i = 0; i < chunks.size(); i++) {
+		recurse(chunks[i], rules);
+	}
+
     std::vector<mPolygon> blocks;
 	std::vector<mPolygon> fin;
     
-	for (int i = 0; i < rules.size(); i++) {
-
-	}
-
-    for (int i = 0; i < chunks.size(); i++) {
-	//	std::vector<Line> rounds = chunks[i].addRoundabouts(20);
-		streetInts.push_back(chunks[i].centroid());
-		if (i % 2) {
-			std::vector<mPolygon> newLines = chunks[i].addRoundabout();
-			
-			for (int j = 0; j < newLines.size(); j++) {
-				std::vector<mPolygon> newBlock = (newLines[j].iceLatticeSplit());
-				blocks.insert(blocks.end(), newBlock.begin(), newBlock.end());
-	
-			}
-			//blocks.insert(blocks.end(), newLines.begin(), newLines.end());
-		}
-	
-		else {
-			//TODO: New-York-Ize the chunk instead
-			std::vector<Highway> newYorkChunk = getVerticalStreets(chunks[i]);
-			getIntersections(&newYorkChunk);
-			std::vector<mPolygon> curNewYork = getPolygons(&newYorkChunk);
-			blocks.insert(blocks.end(), curNewYork.begin(), curNewYork.end());
-		}
-
-		
-    }
+	//for (int i = 0; i < rules.size(); i++) {
+	//
+	//}
+	//
+    //for (int i = 0; i < chunks.size(); i++) {
+	////	std::vector<Line> rounds = chunks[i].addRoundabouts(20);
+	//	streetInts.push_back(chunks[i].centroid());
+	//	if (i % 2) {
+	//		std::vector<mPolygon> newLines = chunks[i].addRoundabout();
+	//		
+	//		for (int j = 0; j < newLines.size(); j++) {
+	//			std::vector<mPolygon> newBlock = (newLines[j].iceLatticeSplit());
+	//			blocks.insert(blocks.end(), newBlock.begin(), newBlock.end());
+	//
+	//		}
+	//		//blocks.insert(blocks.end(), newLines.begin(), newLines.end());
+	//	}
+	//
+	//	else {
+	//		//TODO: New-York-Ize the chunk instead
+	//		std::vector<Highway> newYorkChunk = getVerticalStreets(chunks[i]);
+	//		getIntersections(&newYorkChunk);
+	//		std::vector<mPolygon> curNewYork = getPolygons(&newYorkChunk);
+	//		blocks.insert(blocks.end(), curNewYork.begin(), curNewYork.end());
+	//	}
+	//
+	//	
+    //}
 
 
 	//This shrinks all the blocks in the whole world
-	for (int i = 0; i < blocks.size(); i++) {
-	//	mPolygon subs = blocks[i].shrinkBlock(0.9);
-	
-		std::vector<Line> rounds = blocks[i].addRoundabouts(3);
-		bullshitLines.insert(bullshitLines.end(), rounds.begin(), rounds.end());
-		//if (subs.vertices.size() > 0) {
-		//	fin.push_back(subs);
-		//}
-	}
+	//for (int i = 0; i < blocks.size(); i++) {
+	////	mPolygon subs = blocks[i].shrinkBlock(0.9);
+	//
+	//	std::vector<Line> rounds = blocks[i].addRoundabouts(3);
+	//	bullshitLines.insert(bullshitLines.end(), rounds.begin(), rounds.end());
+	//	//if (subs.vertices.size() > 0) {
+	//	//	fin.push_back(subs);
+	//	//}
+	//}
 
     //for (int i = 0; i < chunks.size(); i++) {
     //    streetInts.push_back(chunks[i].centroid());

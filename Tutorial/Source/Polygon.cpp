@@ -355,8 +355,8 @@ std::vector<mPolygon> mPolygon::split()
     }
 
     //Pick a random point in the middle 3/5s of the line
-    float min = intersectWithThis.minX() + ((intersectWithThis.maxX() - intersectWithThis.minX()) / 3);
-    float max = intersectWithThis.minX() + ((intersectWithThis.maxX() - intersectWithThis.minX()) * 3 / 4);
+    float min = intersectWithThis.minX() + ((intersectWithThis.maxX() - intersectWithThis.minX()) / 2);
+    float max = intersectWithThis.minX() + ((intersectWithThis.maxX() - intersectWithThis.minX()) * 2 / 3);
 
     float midX = randRange(min, max);
     float midY = intersectWithThis.yIntercept(midX);
