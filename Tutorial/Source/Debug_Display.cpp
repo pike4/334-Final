@@ -5,6 +5,9 @@
 #include "Geometry.h"
 #include "Polygon.h"
 
+extern double WIDTH;
+extern double HEIGHT;
+
 #define RAND_COLOR_MODE 0
 
 void markIntersections(std::vector<Point> it)
@@ -15,9 +18,9 @@ void markIntersections(std::vector<Point> it)
     for (int i = 0; i < it.size(); i++)
     {
         Point p = it[i];
-        glVertex2f(p.x, p.y + 0.01);
-        glVertex2f(p.x - 0.01, p.y - 0.005);
-        glVertex2f(p.x + 0.01, p.y - 0.005);
+        glVertex2f(p.x / WIDTH, p.y / HEIGHT+ 0.01);
+        glVertex2f(p.x / WIDTH - 0.01, p.y / HEIGHT - 0.005);
+        glVertex2f(p.x / WIDTH + 0.01, p.y / HEIGHT - 0.005);
     }
     glEnd();
 }
@@ -30,17 +33,17 @@ void drawChunks(std::vector<mPolygon> cur)
     {
         glBegin(GL_POLYGON);
 
-        float c[3] = { 0, 0, 0 };
+        double c[3] = { 0, 0, 0 };
         
 		if (RAND_COLOR_MODE) {
-			c[0] = (float)(rand() % 1000) / 1000;
-			c[1] = (float)(rand() % 1000) / 1000;
-			c[2] = (float)(rand() % 1000) / 1000;
+			c[0] = (double)(rand() % 1000) / 1000;
+			c[1] = (double)(rand() % 1000) / 1000;
+			c[2] = (double)(rand() % 1000) / 1000;
 		}
 
 		else {
 			int q = i % 3;
-			c[q] = ((float)i / cur.size()) + 0.5;
+			c[q] = ((double)i / cur.size()) + 0.5;
 		}
 
         glColor3f(c[0], c[1], c[2]);
@@ -49,7 +52,7 @@ void drawChunks(std::vector<mPolygon> cur)
 
         for (int j = 0; j < bl.size(); j++)
         {
-            glVertex2f(bl[j]->x, bl[j]->y);
+            glVertex2f(bl[j]->x / WIDTH, bl[j]->y / HEIGHT);
         }
         glEnd();
     }

@@ -31,7 +31,7 @@ public:
     mPolygon perimiterOrdered();
 
     //Return the area of the polygon
-    float area();
+    double area();
 
     std::vector<mPolygon> addRoundabout();
 	std::vector<Line>  addRoundabouts(int n);
@@ -46,10 +46,12 @@ public:
     std::vector<mPolygon> mPolygon::split();
 
 	//Return a similar polygon such that the difference between each vertex and the centroid is linearly reduced by $offset
-	mPolygon mPolygon::getBufferedBlock(float offset);
+	mPolygon mPolygon::getBufferedBlock(double offset);
 
 	//Return a similar polygon such that the difference between each vertex and the centroid is scaled by $ratio
-	mPolygon mPolygon::shrinkBlock(float ratio);
+	mPolygon mPolygon::shrinkBlock(double ratio);
+
+	std::vector<Highway*> getHighways();
 
     Point centroid();
 };

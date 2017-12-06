@@ -6,9 +6,9 @@ class Building
 {
 public:
 	int numSpires;
-	float height;
-	float width;
-	float length;
+	double height;
+	double width;
+	double length;
 
 
 	static Building prototype;

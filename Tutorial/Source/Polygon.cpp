@@ -12,6 +12,7 @@ std::vector<Line> getAllConnections(std::vector<Point> points) {
 	for (int i = 0; i < points.size(); i++) {
 		for (int j = i + 1; j < points.size(); j++) {
 			ret.push_back(Line(points[i], points[j]));
+			//bullshitLines.push_back(Line(points[i], points[j]));
 		}
 	}
 
@@ -70,9 +71,9 @@ mPolygon mPolygon::perimiterOrdered() {
     return top;
 }
 
-float mPolygon::area() {
+double mPolygon::area() {
     std::vector<Intercept*> per = perimiterOrdered();
-    float ret = 0;
+    double ret = 0;
     for (int i = 0; i < per.size(); i++) {
         Intercept* j = per[i];
         Intercept* j2 = per[(i + 1) % per.size()];
@@ -88,10 +89,10 @@ float mPolygon::area() {
 Point mPolygon::centroid() {
     std::vector<Intercept*> per = perimiterOrdered();
 
-    float A = area();
+    double A = area();
 
-    float retX = 0;
-    float retY = 0;
+    double retX = 0;
+    double retY = 0;
 
     for (int i = 0; i < per.size(); i++) {
         Intercept* j = per[i];
@@ -112,7 +113,7 @@ std::vector<mPolygon> mPolygon::addRoundabout()
     std::vector<Line> ret;
     std::vector<Point> ints;
     Point center = centroid();
-    streetInts.push_back(center);
+    //streetInts.push_back(center);
     std::vector<Intercept*> per = perimiterOrdered();
 
     std::vector<mPolygon> rett;
@@ -121,17 +122,17 @@ std::vector<mPolygon> mPolygon::addRoundabout()
     { 
         Line cur = Line(*per[i], *per[(i + 1) % per.size()]);
         
-        float min = cur.minX() + ((cur.maxX() - cur.minX()) / 3);
-        float max = cur.minX() + ((cur.maxX() - cur.minX()) * 2 / 3);
+        double min = cur.minX() + ((cur.maxX() - cur.minX()) / 3);
+        double max = cur.minX() + ((cur.maxX() - cur.minX()) * 2 / 3);
 
-        float newX = (min + max) / 2;// randRange(min, max);
-        float newY = cur.yIntercept(newX);
+        double newX = (min + max) / 2;// randRange(min, max);
+        double newY = cur.yIntercept(newX);
 
         ret.push_back(Line(center, Point(newX, newY)));
         bullshitLines.push_back(Line(center, Point(newX, newY)));
 
-        float len = cur.length();
-        if (len > 0.2)
+        double len = cur.length();
+        if (len > 20 * UNIT)
         {
             ret.push_back(Line(center, *per[i]));
 			bullshitLines.push_back(Line(center, *per[i]));
@@ -163,53 +164,40 @@ std::vector<Line> mPolygon::addRoundabouts(int n) {
 	int tot = n;
 	if (n > vertices.size()) { n = vertices.size(); }
 	std::vector<Point> firstScatter;
-	std::vector<Point> hullPoints;
+	vertices = perimiterOrdered();
+	
+	std::vector<Line> fin;
 	for (int i = 0; i < n; i++) {
-		float ratio = randRange(0.33, 0.66);
+		double ratio = randRange(0.33, 0.66);
 
-		Point mA = Point(vertices[i]->x, vertices[i]->y);
-		Point mB = Point(vertices[(i+1)%vertices.size()]->x, vertices[(i + 1) % vertices.size()]->y);
+		double newX = vertices[i]->x - ((vertices[i]->x - center.x) * (1 - ratio));
+		double newY = vertices[i]->y - ((vertices[i]->y - center.y) * (1 - ratio));
 
-		Line mid = Line(mA, mB);
-
-		float min = mid.minX() + (mid.maxX() - mid.minX()) * 0.33;
-		float max = mid.minX() + (mid.maxX() - mid.minX()) * 0.66;
-
-		float x1 = randRange(min, max);
-		float y1 = mid.yIntercept(x1);
-
-		float newX = vertices[i]->x - ((vertices[i]->x - center.x) * (1 - ratio));
-		float newY = vertices[i]->y - ((vertices[i]->y - center.y) * (1 - ratio));
-
-		//Point cur = Point(vertices[i]->x - (center.x * (1- ratio)), vertices[i]->y - (center.y * (1-ratio)));
-		//
-		//cur.x *= (1 - ratio);
-		//cur.y *= (1 - ratio);
+		//The offset for the current vertex
 		Point roundabout = Point(newX, newY);
-		Point r2 = Point(x1, y1);
-		streetInts.push_back(roundabout);
+
+		//Line connecting the current offset and ots vector
+		fin.push_back(Line(roundabout, Point(vertices[i]->x, vertices[i]->y)));
+		//streetInts.push_back(roundabout);
+
+		//streetInts.push_back(roundabout);
 		firstScatter.push_back(roundabout);
-		hullPoints.push_back(r2);
-		if (i < tot - n) {
-			streetInts.push_back(r2);
-			firstScatter.push_back(r2);
-		}
 	}
 	
-	for (int i = 0; i < vertices.size(); i++) {
-		hullPoints.push_back(Point(vertices[i]->x, vertices[i]->y));
-	}
 
-	std::vector<Line> connections = getAllConnections(firstScatter);
-
+	//std::vector<Line> connections = getAllConnections(firstScatter);
+	
 	// Get a list of all connections between lines ascending by length
 	std::vector<Line> trueConnections;
-	trueConnections = filterIntersections(connections, trueConnections);
-	
-	std::vector<Line> otherConnections = pairIntersections(firstScatter, hullPoints);
 
-	std::vector<Line> fin = filterIntersections(otherConnections, trueConnections);
+	for (int i = 0; i < firstScatter.size(); i++) {
+		Point a = firstScatter[i];
+		Point b = firstScatter[(i + 1) % firstScatter.size()];
+		trueConnections.push_back(Line(a, b));
+	}
 
+	fin.insert(fin.end(), trueConnections.begin(), trueConnections.end());
+	bullshitLines.insert(bullshitLines.begin(), fin.begin(), fin.end());
 
 	return fin;
 }
@@ -332,7 +320,7 @@ std::vector<mPolygon> mPolygon::split()
     std::vector<mPolygon> ret;
 
     Point center = centroid();
-    streetInts.push_back(center);
+    //streetInts.push_back(center);
     std::vector<Intercept*> per = perimiterOrdered();
 
     //int ind;
@@ -355,11 +343,11 @@ std::vector<mPolygon> mPolygon::split()
     }
 
     //Pick a random point in the middle 3/5s of the line
-    float min = intersectWithThis.minX() + ((intersectWithThis.maxX() - intersectWithThis.minX()) / 2);
-    float max = intersectWithThis.minX() + ((intersectWithThis.maxX() - intersectWithThis.minX()) * 2 / 3);
+    double min = intersectWithThis.minX() + ((intersectWithThis.maxX() - intersectWithThis.minX()) / 2);
+    double max = intersectWithThis.minX() + ((intersectWithThis.maxX() - intersectWithThis.minX()) * 2 / 3);
 
-    float midX = randRange(min, max);
-    float midY = intersectWithThis.yIntercept(midX);
+    double midX = randRange(min, max);
+    double midY = intersectWithThis.yIntercept(midX);
 
     Point firstPoint = Point(midX, midY);
     Point otherPoint;
@@ -422,7 +410,7 @@ std::vector<mPolygon> mPolygon::split()
     return ret;
 }
 
-mPolygon mPolygon::shrinkBlock(float ratio) {
+mPolygon mPolygon::shrinkBlock(double ratio) {
 
 	std::vector<Intercept*> per = perimiterOrdered();
 	std::vector<Intercept*> ret;
@@ -436,7 +424,7 @@ mPolygon mPolygon::shrinkBlock(float ratio) {
 		cur.y *= (1 - ratio);
 
 		ret.push_back(new Intercept(per[i]->x - cur.x, per[i]->y - cur.y));
-		streetInts.push_back(*ret[i]);
+		//streetInts.push_back(*ret[i]);
 	}
 
 	for (int i = 0; i < ret.size(); i++) {
@@ -449,15 +437,15 @@ mPolygon mPolygon::shrinkBlock(float ratio) {
 	return ret;
 }
 
-mPolygon mPolygon::getBufferedBlock(float offset) {
+mPolygon mPolygon::getBufferedBlock(double offset) {
 	std::vector<Intercept*> per = perimiterOrdered();
 	std::vector<Intercept*> ret;
 
 	Point center = centroid();
 
 	for (int i = 0; i < per.size(); i++) {
-		float newX = 0;
-		float newY = 0;
+		double newX = 0;
+		double newY = 0;
 		if (per[i]->x > center.x) {
 			newX = per[i]->x - offset;
 			if (newX < center.x) {
@@ -505,6 +493,22 @@ mPolygon mPolygon::getBufferedBlock(float offset) {
 		Point b = *ret[(i + 1) % ret.size()];
 
 		bullshitLines.push_back(Line(a, b));
+	}
+
+	return ret;
+}
+
+std::vector<Highway*> mPolygon::getHighways()
+{
+	std::vector<Intercept*> per = perimiterOrdered();
+
+	std::vector<Highway*> ret;
+
+	for (int i = 0; i < per.size(); i++) {
+		Point a = Point(per[i]->x, per[i]->y);
+		Point b = Point(per[(i + 1) % per.size()]->x, per[(i + 1) % per.size()]->y);
+
+		Highway* cur = new Highway(a, b);
 	}
 
 	return ret;

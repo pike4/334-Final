@@ -3,37 +3,37 @@
 #include <vector>
 #include <algorithm>
 
+extern double HEIGHT;
+extern double WIDTH;
+extern double UNIT;
+
 class Point
 {
 public:
-    Point()
-    {
+    Point() {
         x = 0;
         y = 0;
     }
-    Point(float a, float b)
-    {
+
+    Point(double a, double b) {
         x = a;
         y = b;
     }
 
-    bool isInf()
-    {
+    bool isInf() {
         return ( (x == 0xdeadbeef && y == 0xdeadbeef) );
     }
 
-    float m()
-    {
+    double m() {
         return x;
     }
 
-    float b()
-    {
+    double b() {
         return y;
     }
 
-    float x;
-    float y;
+    double x;
+    double y;
 };
 
 class Line
@@ -52,11 +52,11 @@ public:
             return Point(0xdeadbeef, 0xdeadbeef);
         }
 
-        float rise = (b.y - a.y);
-        float run =  (b.x - a.x);
+        double rise = (b.y - a.y);
+        double run =  (b.x - a.x);
 
-        float slope = rise / run;
-        float intercept = a.y - (slope * a.x);
+        double slope = rise / run;
+        double intercept = a.y - (slope * a.x);
 
         return Point(slope, intercept);
     }
@@ -72,11 +72,11 @@ public:
             if (f1.m() != 0)
             {
                 // Now solve the system of equations to get intersection point
-                float factor = f2.m() / f1.m();
-                float newB = f2.b() - (f1.b() * factor);
-                float a = 1 - factor;
-                float newY = newB / a;
-                float newX = (newY - f1.b()) / f1.m();
+                double factor = f2.m() / f1.m();
+                double newB = f2.b() - (f1.b() * factor);
+                double a = 1 - factor;
+                double newY = newB / a;
+                double newX = (newY - f1.b()) / f1.m();
 
                 return Point(newX, newY);
             }
@@ -93,8 +93,8 @@ public:
                 //l2 and l1 intersect somewhere
                 else
                 {
-                    float newY = a.y;
-                    float newX = (newY - f2.b()) / f2.m();
+                    double newY = a.y;
+                    double newX = (newY - f2.b()) / f2.m();
 
                     return Point(newX, newY);
                 }
@@ -126,22 +126,22 @@ public:
                 otherFormula = f1;
             }
 
-            float newX = vertLine.a.x;
-            float newY = (otherFormula.m() * newX) + otherFormula.b();
+            double newX = vertLine.a.x;
+            double newY = (otherFormula.m() * newX) + otherFormula.b();
 
             return Point(newX, newY);
         }
     }
 
     // Get the x value of this line at the given 
-    float xIntercept(float otherY) {
+    double xIntercept(double otherY) {
         Point f = formula();
 
         return ( otherY - f.b() ) / f.m();
     }
 
     // Get the y value of line defined by this segment at the given x coordinate
-    float yIntercept(float otherX) {
+    double yIntercept(double otherX) {
         Point f = formula();
 
         return (f.m() * otherX) + f.b();
@@ -149,57 +149,57 @@ public:
 
     // True if the given point is within the domain and range of this segment
     bool contains(Point other) {
-        bool b1 = (std::min(a.x, b.x) < (other.x + 0.001) );
-        bool b2 = (std::max(a.x, b.x) > (other.x - 0.001) );
+        bool b1 = (std::min(a.x, b.x) < (other.x + 0.1 * UNIT) );
+        bool b2 = (std::max(a.x, b.x) > (other.x - 0.1 * UNIT) );
 
         return (b1 && b2 && !other.isInf());
     }
 
 	// True if the lines actually cross, false if they intersect at the endpoints
 	bool crosses(Point other) {
-		bool b1 = (minX() < (other.x - 0.001));
-		bool b2 = (maxX() > (other.x + 0.001));
+		bool b1 = (minX() < (other.x -  UNIT));
+		bool b2 = (maxX() > (other.x +  UNIT));
 
 		return (b1 && b2 && !other.isInf());
 	}
 
     //True if the given x coordinate is within the domain of this segment
-    bool containsX(float otherX) {
-        bool b1 = (std::min(a.x, b.x) < (otherX + 0.001));
-        bool b2 = (std::max(a.x, b.x) > (otherX - 0.001));
+    bool containsX(double otherX) {
+        bool b1 = (std::min(a.x, b.x) < (otherX + 0.1 * UNIT));
+        bool b2 = (std::max(a.x, b.x) > (otherX - 0.1 * UNIT));
 
         return (b1 && b2);
     }
 
     //True if the given y coordinate is within the range of this segment
-    bool containsY(float otherY) {
-        bool b1 = (std::min(a.y, b.y) < (otherY + 0.001));
-        bool b2 = (std::max(a.y, b.y) > (otherY - 0.001));
+    bool containsY(double otherY) {
+        bool b1 = (std::min(a.y, b.y) < (otherY + 0.1 * UNIT));
+        bool b2 = (std::max(a.y, b.y) > (otherY - 0.1 * UNIT));
 
         return (b1 && b2);
     }
 
     //Return minimum x value of this line segment
-    float minX() {
+    double minX() {
         return std::min(a.x, b.x);
     }
 
     //Return maximum x value of this line segment
-    float maxX() {
+    double maxX() {
         return std::max(a.x, b.x);
     }
 
     //Return minimum y value of this line segment
-    float minY() {
+    double minY() {
         return std::min(a.y, b.y);
     }
 
     //Return maximum y value of this line segment
-    float maxY() {
+    double maxY() {
         return std::max(a.y, b.y);
     }
 
-    float length() {
+    double length() {
         return sqrt(pow(maxX() - minX(), 2) + pow(maxY() - minY(), 2));
     }
 
@@ -213,12 +213,12 @@ class Intercept : public Point
 {
 public:
     
-    Intercept(float a, float b) : Point(a, b)
+    Intercept(double a, double b) : Point(a, b)
     {
 
     }
 
-    Intercept(float a, float b, Highway* H1, Highway* H2) : Point(a, b)
+    Intercept(double a, double b, Highway* H1, Highway* H2) : Point(a, b)
     {
         h1 = H1;
         h2 = H2;
@@ -257,14 +257,14 @@ public:
 class Solid
 {
 public:
-    Solid(float W, float H, float L)
+    Solid(double W, double H, double L)
     {
         w = W;
         h = H;
         l = L;
     }
 
-    float w, h, l;
+    double w, h, l;
 };
 
 class Building
@@ -276,7 +276,7 @@ class Building
 
 class mPolygon;
 
-float randRange(float min, float max);
+double randRange(double min, double max);
 
 extern std::vector<Highway> lines;
 extern std::vector< mPolygon > chunks;

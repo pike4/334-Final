@@ -22,6 +22,9 @@ std::vector< mPolygon > chunks;
 std::vector<Point> streetInts;
 std::vector<Point> intersections;
 
+char initialCondition;
+int numSides;
+
 std::vector<Line> bullshitLines;
 
 static const GLfloat vertices[] =
@@ -33,16 +36,21 @@ static const GLfloat vertices[] =
 
 int NUM_VERTICAL_HIGHWAYS = 2;
 int NUM_HORIZONTAL_HIGHWAYS = 2;
-float MIN_BLOCK_AREA = 0.01;
+double MIN_BLOCK_AREA = 0.01;
 const int NUM_MID_STREETS = 2;
 
-const float STREET_WIDTH = 0.15;
+double UNIT = 1.0f;
+double WIDTH = UNIT * 1000.0f;
+double HEIGHT = UNIT * 1000.0f;
+
+double STREET_WIDTH;
+double GRID_SIZE;
 
 // Likelihood that a given highway will be parallel to an axis rather than at an angle
-const float HIGHWAY_TAXI_FACTOR = 0.0;
+const double HIGHWAY_TAXI_FACTOR = 0.0;
 
 struct Rule {
-	float minSize;
+	double minSize;
 	int depth;
 	char rule;
 };
@@ -55,27 +63,41 @@ std::vector<Rule> readRules() {
 
 	std::string line1, line2;
 
-	float minSize;
+	double minSize;
 	int h, v;
 	char cur;
-	while (inFile.good()) {
+	while (1) {
 		inFile >> cur;
+		if (!inFile.good()) {
+			break;
+		}
 		Rule newRule;
+		
 		if (cur == 'H') {
 			inFile >> NUM_HORIZONTAL_HIGHWAYS;
 		}
 		else if (cur == 'V') {
 			inFile >> NUM_VERTICAL_HIGHWAYS;
 		}
-		else if (cur == 'A') {
-			inFile >> MIN_BLOCK_AREA;
+		else if (cur == 'W') {
+			inFile >> STREET_WIDTH;
+			STREET_WIDTH *= UNIT;
 		}
 		else if( cur == 'R' || cur == 'I' || cur == 'M' || cur == 'B') {
 			newRule.rule = cur;
-			//inFile >> newRule.depth;
-			//inFile >> cur;
-			//inFile >> newRule.minSize;
 			ret.push_back(newRule);
+		}
+		else if (cur == 'G') {
+			newRule.rule = cur;
+			inFile >> newRule.minSize;
+			ret.push_back(newRule);
+		}
+		else if (cur == 'C' ) {
+			initialCondition = cur;
+			inFile >> numSides;
+		}
+		else if (cur == 'S') {
+			initialCondition = cur;
 		}
 	}
 	return ret;
@@ -85,7 +107,7 @@ std::vector<Rule> readRules() {
 std::vector<Highway> genTicTacToe()
 {
     std::vector<Highway> ret;
-    ret.push_back(Highway(Point(-1.0f, 0.2), Point(1.0f, 0.2) ) );
+    ret.push_back(Highway(Point(-WIDTH, 0.2), Point(WIDTH, 0.2 * HEIGHT) ) );
     //ret.push_back(Highway(Point(-1.0f, 0.5), Point(1.0f, 0.2)));
     ret.push_back(Highway(Point(-1.0f, -0.5), Point(1.0f, -0.3)));
     
@@ -99,11 +121,11 @@ std::vector<Highway> genBoundary()
 {
     std::vector<Highway> ret;
 
-    ret.push_back(Highway(Point(-1.0f, -0.99f), Point(1.0f, -0.99f)));
-    ret.push_back(Highway(Point(-1.0f, 0.99f), Point(1.0f, 0.99f)));
+    ret.push_back(Highway(Point(-WIDTH, -999.0f), Point(WIDTH, -998.0f)));
+    ret.push_back(Highway(Point(-WIDTH, 999.0f), Point(WIDTH, 999.0f)));
     //
-    ret.push_back(Highway(Point(-0.98f, -1.0f), Point(-0.99f, 1.0f)));
-    ret.push_back(Highway(Point(0.98, -1.0f), Point(0.99f, 1.0f)));
+    ret.push_back(Highway(Point(-0.98f * WIDTH, -HEIGHT), Point(-0.998f * WIDTH, HEIGHT)));
+    ret.push_back(Highway(Point(0.98f * WIDTH, -HEIGHT), Point(0.99f * WIDTH, HEIGHT)));
 
     return ret;
 }
@@ -118,11 +140,11 @@ std::vector<Highway> genLines()
         Point p2;
 
 		//Limit placements of highways to the ith TOTAL_LENGTH / NUM_VERTICAL_HIGHWAYS length stretch of the road
-		float min = -1.0f + ( (1.0f - (-1.0f)) * i) / NUM_VERTICAL_HIGHWAYS;
-		float max = -1.0f + ( (1.0f - (-1.0f)) * (i + 1)) / NUM_VERTICAL_HIGHWAYS;
+		double min = -WIDTH + ( (WIDTH - (-WIDTH)) * i) / NUM_VERTICAL_HIGHWAYS;
+		double max = -WIDTH + ( (WIDTH - (-WIDTH)) * (i + 1)) / NUM_VERTICAL_HIGHWAYS;
 
 		p1.x = randRange(min, max);
-        p1.y = -1.0f;
+        p1.y = -HEIGHT;
 
         if (((rand() % 1000) / 1000.0f) < HIGHWAY_TAXI_FACTOR)
         {
@@ -133,7 +155,7 @@ std::vector<Highway> genLines()
 			p2.x = randRange(min, max);
         }
         
-        p2.y = 1.0f;
+        p2.y = HEIGHT;
 
         Line L = Line(p1, p2);
 
@@ -146,11 +168,11 @@ std::vector<Highway> genLines()
         Point p2;
 
 		//Limit placements of highways to the ith TOTAL_LENGTH / NUM_VERTICAL_HIGHWAYS length stretch of the road
-		float min = ( (1.0f - (-1.0f)) * i) / NUM_HORIZONTAL_HIGHWAYS;
-		float max = ( (1.0f - (-1.0f)) * (i + 1)) / NUM_HORIZONTAL_HIGHWAYS;
+		double min = ( (HEIGHT - (-HEIGHT)) * i) / NUM_HORIZONTAL_HIGHWAYS;
+		double max = ( (HEIGHT - (-HEIGHT)) * (i + 1)) / NUM_HORIZONTAL_HIGHWAYS;
 
 		p1.y = randRange(min, max);
-        p1.x = -1.0f;
+        p1.x = -WIDTH;
 
         if (((rand() % 1000) / 1000.0f) < HIGHWAY_TAXI_FACTOR)
         {
@@ -161,7 +183,7 @@ std::vector<Highway> genLines()
             p2.y = randRange(min, max);
         }
 
-        p2.x = 1.0f;
+        p2.x = WIDTH;
 
         Line L = Line(p1, p2);
 
@@ -169,6 +191,44 @@ std::vector<Highway> genLines()
     }
 
     return ret;
+}
+
+mPolygon genPerimeter(int count) {
+	
+	Point center = Point(0,0);
+	std::vector<Point> hull;
+	std::vector<Intercept*> ret;
+	std::vector<double> rads;
+
+	double maxRad = WIDTH * 0.99;
+	double minRad = HEIGHT * 0.7;
+
+	for (int i = 0; i < count; i++) {
+		double curRad = randRange(minRad, maxRad);
+
+		rads.push_back(curRad);
+	}
+
+	std::sort(rads.begin(), rads.end());
+	rads[0]+= (std::max(rads[1], rads[rads.size() - 1]) - std::min(rads[1], rads[rads.size() - 1])) * 1 / 3;
+	rads[rads.size() - 1] -= (std::max(rads[1], rads[rads.size() - 1]) - std::min(rads[1], rads[rads.size() - 1])) * 2 / 10;
+
+	
+	for (int i = 0; i < rads.size(); i++) {
+		double curRad = rads[i];
+		double curAngle = ((2 * 3.14159265) * i) / count;
+		hull.push_back(Point(center.x + (curRad * cos(curAngle)), center.y + (curRad * sin(curAngle))));
+	}
+
+
+	for (int i = 0; i < hull.size(); i++) {
+		Point a = hull[i];
+		Point b = hull[(i + 1) % hull.size()];
+		bullshitLines.push_back(Line(a, b));
+		ret.push_back(new Intercept(a.x, a.y));
+	}
+
+	return ret;
 }
 
 std::vector<Highway> genOffshoots(std::vector<Highway> orig)
@@ -179,19 +239,19 @@ std::vector<Highway> genOffshoots(std::vector<Highway> orig)
 
         Point form = orig[ind].formula();
 
-        float minX = std::min(orig[ind].a.x, orig[ind].b.x);
-        float maxX = std::max(orig[ind].a.x, orig[ind].b.x);
+        double minX = std::min(orig[ind].a.x, orig[ind].b.x);
+        double maxX = std::max(orig[ind].a.x, orig[ind].b.x);
 
-        float offX = randRange(minX, maxX);
-        float offY = offX * form.m() + form.b();
+        double offX = randRange(minX, maxX);
+        double offY = offX * form.m() + form.b();
 
-        float endX = 0;
-        float endY = 0;
+        double endX = 0;
+        double endY = 0;
 
-        float newX, newY;
+        double newX, newY;
 
-        float slope = -1.0/form.m();
-        float newB = offY - (slope * offX);
+        double slope = -1.0/form.m();
+        double newB = offY - (slope * offX);
 
         newX = 1.0;
         newY = endX * slope + newB;
@@ -312,7 +372,7 @@ bool polygonize(Intercept* origin, std::vector<Intercept*>* polygon, Intercept* 
         // The vector from p1 to q1
         Point o1 = Point(q1->x - p1->x, q1->y - p1->y);
 
-        float dot = (v_origin.y * o1.x) - (v_origin.x * o1.y);
+        double dot = (v_origin.y * o1.x) - (v_origin.x * o1.y);
 
         //Turn is the same
         if ( (dot < 0 && turn < 0) || (dot > 0 && turn > 0) )
@@ -452,7 +512,7 @@ std::vector<mPolygon> getPolygons(std::vector<Highway>* mLines)
 #pragma endregion
 
 //Get from the given vector the line that the given coordinate lies on
-Line getCorresponding(std::vector<Intercept*> hat, float value, char xy)
+Line getCorresponding(std::vector<Intercept*> hat, double value, char xy)
 {
     for (int i = 0; i < hat.size() - 1; i++)
     {
@@ -482,7 +542,7 @@ Line getCorresponding(std::vector<Intercept*> hat, float value, char xy)
     return Line(a, b);
 }
 
-std::vector<Intercept*> rotateToRandom(std::vector<Intercept*> hull, float* returnAngle, float* oX, float* oY)
+std::vector<Intercept*> rotateToRandom(std::vector<Intercept*> hull, double* returnAngle, double* oX, double* oY)
 {
     std::vector<Intercept*> ret;
 
@@ -499,16 +559,16 @@ std::vector<Intercept*> rotateToRandom(std::vector<Intercept*> hull, float* retu
     Intercept* p1 = ret[ind];
     Intercept* p2 = ret[ (ind+1) % ret.size() ];
 
-    float ox = p1->x;
-    float oy = p1->y;
+    double ox = p1->x;
+    double oy = p1->y;
 
     *oX = ox;
     *oY = oy;
 
-    float angle = atan2((p2->y - p1->y), (p2->x - p1->x));
+    double angle = atan2((p2->y - p1->y), (p2->x - p1->x));
     *returnAngle = angle;
-    float cosTheta = cos(-angle);
-    float sinTheta = sin(-angle);
+    double cosTheta = cos(-angle);
+    double sinTheta = sin(-angle);
 
     for (int i = 0; i < ret.size(); i++)
     {
@@ -516,8 +576,8 @@ std::vector<Intercept*> rotateToRandom(std::vector<Intercept*> hull, float* retu
         ret[i]->y -= oy;
 
 
-        float xx = (ret[i]->x * cosTheta) - (ret[i]->y * sinTheta);
-        float yy = (ret[i]->x * sinTheta) + (ret[i]->y * cosTheta);
+        double xx = (ret[i]->x * cosTheta) - (ret[i]->y * sinTheta);
+        double yy = (ret[i]->x * sinTheta) + (ret[i]->y * cosTheta);
 
         ret[i]->x = xx;
         ret[i]->y = yy;
@@ -533,7 +593,7 @@ std::vector<Intercept*> rotateToRandom(std::vector<Intercept*> hull, float* retu
 std::vector<Highway> getVerticalStreets(mPolygon hull)
 {
     std::vector<Highway> ret;
-    float angle, ox, oy;
+    double angle, ox, oy;
     mPolygon rotated = rotateToRandom(hull, &angle, &ox, &oy);
     mPolygon top = rotated.topHat();
     mPolygon bottom = rotated.bottomHat();
@@ -542,46 +602,46 @@ std::vector<Highway> getVerticalStreets(mPolygon hull)
 
     std::sort(rotated.vertices.begin(), rotated.vertices.end(), sortInterceptX);
 
-    float minX = rotated[0]->x;
-    float maxX = rotated[rotated.vertices.size() - 1]->x;
+    double minX = rotated[0]->x;
+    double maxX = rotated[rotated.vertices.size() - 1]->x;
 
-    float pen = minX + STREET_WIDTH;
+    double pen = minX + GRID_SIZE;
 
     std::vector<Point> roads;
 
     //Draw the "horizontal" roads
-    while (pen < (maxX - STREET_WIDTH) )
+    while (pen < (maxX - GRID_SIZE) )
     {
         Line topLine = getCorresponding(top, pen, 'x');
         Line bottomLine = getCorresponding(bottom, pen, 'x');
 
-        float topY = topLine.yIntercept(pen);
-        float bottomY = bottomLine.yIntercept(pen);
+        double topY = topLine.yIntercept(pen);
+        double bottomY = bottomLine.yIntercept(pen);
 
         roads.push_back(Point(pen, topY));
         roads.push_back(Point(pen, bottomY));
 
-        pen += STREET_WIDTH;
+        pen += GRID_SIZE;
     }
 
     // Sort the points of the hull by y value, get the top and bottom points, and set the pen
     std::sort(rotated.vertices.begin(), rotated.vertices.end(), sortInterceptY);
-    float minY = rotated[0]->y;
-    float maxY = rotated[rotated.vertices.size() - 1]->y;
-    pen = minY + STREET_WIDTH;
+    double minY = rotated[0]->y;
+    double maxY = rotated[rotated.vertices.size() - 1]->y;
+    pen = minY + GRID_SIZE;
 
-    while (pen < (maxY - STREET_WIDTH))
+    while (pen < (maxY - GRID_SIZE))
     {
         Line leftLine = getCorresponding(left, pen, 'y');
         Line rightLine = getCorresponding(right, pen, 'y');
 
-        float leftX = leftLine.xIntercept(pen);
-        float rightX = rightLine.xIntercept(pen);
+        double leftX = leftLine.xIntercept(pen);
+        double rightX = rightLine.xIntercept(pen);
 
         roads.push_back(Point(leftX, pen));
         roads.push_back(Point(rightX, pen));
 
-        pen += STREET_WIDTH;
+        pen += GRID_SIZE;
     }
 
 
@@ -589,8 +649,8 @@ std::vector<Highway> getVerticalStreets(mPolygon hull)
     {
         roads[i].x -= ox;
         roads[i].y -= oy;
-        float xx = (roads[i].x * cos(angle) ) - (roads[i].y * sin(angle) );
-        float yy = (roads[i].x * sin(angle) ) + (roads[i].y * cos(angle) );
+        double xx = (roads[i].x * cos(angle) ) - (roads[i].y * sin(angle) );
+        double yy = (roads[i].x * sin(angle) ) + (roads[i].y * cos(angle) );
 
         roads[i].x = xx;
         roads[i].y = yy;
@@ -658,15 +718,15 @@ std::vector<mPolygon> splitInHalf(mPolygon toSplit) {
     int ind2 = (rand() % (bottom.size() - 1));
 
     // Select a random point on the top and bottom lines
-    float offX = randRange(top[ind1]->x, top[ind1 + 1]->x);
-    float offX2 = randRange(top[ind2]->x, top[ind2 + 1]->x);
+    double offX = randRange(top[ind1]->x, top[ind1 + 1]->x);
+    double offX2 = randRange(top[ind2]->x, top[ind2 + 1]->x);
 
     //
     Line topLine = getCorresponding(top, offX, 'x');
     Line bottomLine = getCorresponding(bottom, offX2, 'x');
 
-    float offY = topLine.yIntercept(offX);
-    float offY2 = bottomLine.yIntercept(offX2);
+    double offY = topLine.yIntercept(offX);
+    double offY2 = bottomLine.yIntercept(offX2);
 
     std::vector<Intercept*> split1;
     std::vector<Intercept*> split2;
@@ -739,23 +799,47 @@ std::vector<mPolygon> recurse(mPolygon cur, std::vector<Rule> rules) {
 
 	//TODO: convert to multiple roundabouts
 	else if (rules[0].rule == 'M') {
-		
+		std::vector<Line> needs = cur.addRoundabouts(10000000);
+		std::vector<Highway> stret;
+		for (int i = 0; i < needs.size(); i++) {
+			stret.push_back(Highway(needs[i]));
+		}
+
+		getIntersections(&stret);
+		result = getPolygons(&stret);
 	}
 
 	//TODO: return current chunk as blocks
 	else if (rules[0].rule == 'B') {
+		GRID_SIZE = STREET_WIDTH;
+		std::vector<Highway> newYork = getVerticalStreets(cur);
+		getIntersections(&newYork);
+		result = getPolygons(&newYork);
+	}
 
+	else if (rules[0].rule == 'G') {
+		GRID_SIZE = rules[0].minSize;
+		std::vector<Highway> newYork = getVerticalStreets(cur);
+		getIntersections(&newYork);
+		result = getPolygons(&newYork);
 	}
 
 	for (int i = 0; i < result.size(); i++) {
-		std::vector<mPolygon> recurseResult = recurse(result[i], next);
+		if (result[i].area() > STREET_WIDTH * STREET_WIDTH) {
+			std::vector<mPolygon> recurseResult = recurse(result[i], next);
 
-		if (recurseResult.size() > 0) {
-			ret.insert(ret.end(), recurseResult.begin(), recurseResult.end());
+			if (recurseResult.size() > 0) {
+				ret.insert(ret.end(), recurseResult.begin(), recurseResult.end());
+			}
+
+			else {
+				ret.insert(ret.end(), result.begin(), result.end());
+			}
 		}
 
+		// If the current block is too small to continue splitting, push back the current block with recursing any further
 		else {
-			ret.insert(ret.end(), result.begin(), result.end());
+			ret.push_back(result[i]);
 		}
 	}
 
@@ -769,10 +853,14 @@ int main(int argc, char** argv)
     GLuint vertexBuffer;
 	std::vector<Rule> rules = readRules();
 
+	if (STREET_WIDTH < 1) {
+		STREET_WIDTH = 10;
+	}
+
     glutInit(&argc, argv);
 
-    glutInitWindowSize(800, 800);
-    glutInitWindowPosition(200, 40);
+    glutInitWindowSize(WIDTH, HEIGHT);
+    glutInitWindowPosition(200, 0);
 
     glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE | GLUT_DEPTH);
 
@@ -789,23 +877,31 @@ int main(int argc, char** argv)
     }
 
     lines = genLines();
-	
-    
-    std::vector<Highway> bounds = genBoundary();
 
-    lines.insert(lines.end(), bounds.begin(), bounds.end());
-
-    intersections = getIntersections(&lines);
-
-    chunks = getPolygons(&lines);
-
-	for (int i = 0; i < chunks.size(); i++) {
-		recurse(chunks[i], rules);
+	if (initialCondition == 'C') {
+		chunks.push_back(genPerimeter(numSides));
 	}
 
-    std::vector<mPolygon> blocks;
+	else {
+		std::vector<Highway> bounds = genBoundary();
+		lines.insert(lines.end(), bounds.begin(), bounds.end());
+		intersections = getIntersections(&lines);
+		chunks = getPolygons(&lines);
+	}
+	
+	printf("done!\n");
 	std::vector<mPolygon> fin;
+	
+	for (int i = 0; i < chunks.size(); i++) {
+		std::vector<mPolygon> res = recurse(chunks[i], rules);
+	
+		fin.insert(fin.end(), res.begin(), res.end());
+	}
+	
+    std::vector<mPolygon> blocks;
     
+
+
 	//for (int i = 0; i < rules.size(); i++) {
 	//
 	//}
@@ -909,9 +1005,9 @@ int main(int argc, char** argv)
         glEnd();
         
         
-        drawChunks(chunks);
-
-        drawChunks(blocks);
+        //drawChunks(chunks);
+		//
+        //drawChunks(blocks);
 		drawChunks(fin);
 
         glColor3f(1, 0, 0);
@@ -923,8 +1019,8 @@ int main(int argc, char** argv)
         glColor3f(0, 0, 0);
         for (int i = 0; i < bullshitLines.size(); i++)
         {
-            glVertex2f(bullshitLines[i].a.x, bullshitLines[i].a.y);
-            glVertex2f(bullshitLines[i].b.x, bullshitLines[i].b.y);
+            glVertex2f(bullshitLines[i].a.x / WIDTH, bullshitLines[i].a.y / HEIGHT);
+            glVertex2f(bullshitLines[i].b.x / WIDTH, bullshitLines[i].b.y / HEIGHT);
         }
         glEnd();
 
