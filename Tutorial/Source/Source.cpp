@@ -53,11 +53,14 @@ struct Rule {
 	double minSize;
 	int depth;
 	char rule;
+   std::vector<Rule> rules;
 };
 
 std::vector<Rule> readRules() {
 	std::ifstream inFile;
+
 	std::vector<Rule> ret;
+   std::vector<Rule>* ref = &ret;
 
 	inFile.open("grammar.txt");
 
@@ -83,14 +86,21 @@ std::vector<Rule> readRules() {
 			inFile >> STREET_WIDTH;
 			STREET_WIDTH *= UNIT;
 		}
-		else if( cur == 'R' || cur == 'I' || cur == 'M' || cur == 'B') {
+		else if( cur == 'R' || cur == 'I' || cur == 'B') {
 			newRule.rule = cur;
-			ret.push_back(newRule);
+			ref->push_back(newRule);
 		}
+      else if (cur == 'M') {
+          newRule.rule = cur;
+          inFile >> newRule.minSize;
+          inFile >> cur;
+          ref->push_back(newRule);
+          ref = &ret[ret.size() - 1].rules;
+      }
 		else if (cur == 'G') {
 			newRule.rule = cur;
 			inFile >> newRule.minSize;
-			ret.push_back(newRule);
+			ref->push_back(newRule);
 		}
 		else if (cur == 'C' ) {
 			initialCondition = cur;
@@ -99,9 +109,13 @@ std::vector<Rule> readRules() {
 		else if (cur == 'S') {
 			initialCondition = cur;
 		}
+      else if (cur == ')') {
+          ref = &ret;
+      }
 	}
 	return ret;
 }
+
 
 #pragma region Highway generation
 std::vector<Highway> genTicTacToe()
@@ -785,6 +799,7 @@ std::vector<mPolygon> recurse(mPolygon cur, std::vector<Rule> rules) {
 	}
 
 	std::vector<Rule> next = std::vector<Rule>(rules.begin() + 1, rules.end());
+   std::vector<Rule> other;
 	std::vector<mPolygon> result;
 
 	// TODO: One roundabout
@@ -799,14 +814,9 @@ std::vector<mPolygon> recurse(mPolygon cur, std::vector<Rule> rules) {
 
 	//TODO: convert to multiple roundabouts
 	else if (rules[0].rule == 'M') {
-		std::vector<Line> needs = cur.addRoundabouts(10000000);
-		std::vector<Highway> stret;
-		for (int i = 0; i < needs.size(); i++) {
-			stret.push_back(Highway(needs[i]));
-		}
+		result = cur.addRoundabouts(rules[0].minSize);
 
-		getIntersections(&stret);
-		result = getPolygons(&stret);
+      other = rules[0].rules;
 	}
 
 	//TODO: return current chunk as blocks
@@ -826,7 +836,15 @@ std::vector<mPolygon> recurse(mPolygon cur, std::vector<Rule> rules) {
 
 	for (int i = 0; i < result.size(); i++) {
 		if (result[i].area() > STREET_WIDTH * STREET_WIDTH) {
-			std::vector<mPolygon> recurseResult = recurse(result[i], next);
+          std::vector<mPolygon> recurseResult;
+          
+          if (rules[0].rule == 'M' && i == 0) {
+              recurseResult = recurse(result[i], other);
+          }
+          
+          else {
+              recurseResult = recurse(result[i], next);
+          }
 
 			if (recurseResult.size() > 0) {
 				ret.insert(ret.end(), recurseResult.begin(), recurseResult.end());

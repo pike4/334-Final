@@ -155,51 +155,53 @@ std::vector<mPolygon> mPolygon::addRoundabout()
     return rett;
 }
 
-std::vector<Line> mPolygon::addRoundabouts(int n) {
-	if (area() < 0.01) {
-		std::vector<Line> aa;
-		return aa;
-	}
+std::vector<mPolygon> mPolygon::addRoundabouts(double r) {
 	Point center = centroid();
-	int tot = n;
-	if (n > vertices.size()) { n = vertices.size(); }
-	std::vector<Point> firstScatter;
-	vertices = perimiterOrdered();
-	
-	std::vector<Line> fin;
-	for (int i = 0; i < n; i++) {
-		double ratio = randRange(0.33, 0.66);
+	int n = vertices.size(); 
 
-		double newX = vertices[i]->x - ((vertices[i]->x - center.x) * (1 - ratio));
-		double newY = vertices[i]->y - ((vertices[i]->y - center.y) * (1 - ratio));
+   std::vector<Point> outer;
+   std::vector<Point> inner;
+
+   std::vector<Intercept*> per = perimiterOrdered();
+
+   std::vector<mPolygon> ret;
+
+	for (int i = 0; i < n; i++) {
+       double ratio = r;
+
+		double newX = per[i]->x - ((per[i]->x - center.x) * (1 - ratio));
+		double newY = per[i]->y - ((per[i]->y - center.y) * (1 - ratio));
 
 		//The offset for the current vertex
 		Point roundabout = Point(newX, newY);
 
-		//Line connecting the current offset and ots vector
-		fin.push_back(Line(roundabout, Point(vertices[i]->x, vertices[i]->y)));
-		//streetInts.push_back(roundabout);
+      bullshitLines.push_back(Line(roundabout, Point(per[i]->x, per[i]->y)));
 
-		//streetInts.push_back(roundabout);
-		firstScatter.push_back(roundabout);
+		//Line connecting the current offset and ots vector
+      inner.push_back(roundabout);
 	}
 	
 
 	//std::vector<Line> connections = getAllConnections(firstScatter);
 	
 	// Get a list of all connections between lines ascending by length
-	std::vector<Line> trueConnections;
-
-	for (int i = 0; i < firstScatter.size(); i++) {
-		Point a = firstScatter[i];
-		Point b = firstScatter[(i + 1) % firstScatter.size()];
-		trueConnections.push_back(Line(a, b));
+	
+   std::vector<Intercept*> innerPoly;
+	for (int i = 0; i < inner.size(); i++) {
+       innerPoly.push_back(new Intercept(inner[i].x, inner[i].y));
 	}
+   ret.push_back(innerPoly);
 
-	fin.insert(fin.end(), trueConnections.begin(), trueConnections.end());
-	bullshitLines.insert(bullshitLines.begin(), fin.begin(), fin.end());
+   for (int i = 0; i < inner.size(); i++) {
+       std::vector<Intercept*> newTrapezoid;
+       newTrapezoid.push_back(new Intercept(inner[i].x, inner[i].y));
+       newTrapezoid.push_back(new Intercept(inner[(i + 1) % inner.size()].x, inner[(i + 1) % inner.size()].y));
+       newTrapezoid.push_back(new Intercept(per[i]->x, per[i]->y));
+       newTrapezoid.push_back(new Intercept(per[(i + 1) % per.size()]->x, per[(i + 1) % per.size()]->y));
+       ret.push_back(newTrapezoid);
+   }
 
-	return fin;
+	return ret;
 }
 
 #pragma region hats

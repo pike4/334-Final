@@ -34,7 +34,7 @@ public:
     double area();
 
     std::vector<mPolygon> addRoundabout();
-	std::vector<Line>  addRoundabouts(int n);
+	std::vector<mPolygon>  addRoundabouts(double n);
 
     //Return a vector of recursively split polygons until the minimum size is reached for each
     std::vector<mPolygon> mPolygon::iceLatticeSplit();
