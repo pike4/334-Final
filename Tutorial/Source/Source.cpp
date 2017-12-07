@@ -154,21 +154,14 @@ std::vector<Highway> genLines()
         Point p2;
 
 		//Limit placements of highways to the ith TOTAL_LENGTH / NUM_VERTICAL_HIGHWAYS length stretch of the road
-		double min = -WIDTH + ( (WIDTH - (-WIDTH)) * i) / NUM_VERTICAL_HIGHWAYS;
-		double max = -WIDTH + ( (WIDTH - (-WIDTH)) * (i + 1)) / NUM_VERTICAL_HIGHWAYS;
+        float nth = -WIDTH + (2* WIDTH * (1.0f / (NUM_VERTICAL_HIGHWAYS + 1)));
+        double min = -WIDTH + ((i + 1) * 2 * WIDTH * (1.0f / (NUM_VERTICAL_HIGHWAYS + 2)));
+        double max = -WIDTH + ((i + 1) * 2* WIDTH * (2.0f / (NUM_VERTICAL_HIGHWAYS + 2)));
 
-		p1.x = randRange(min, max);
+        p1.x = randRange(min, max);
         p1.y = -HEIGHT;
-
-        if (((rand() % 1000) / 1000.0f) < HIGHWAY_TAXI_FACTOR)
-        {
-            p2.x = p1.x;
-        }
-        else
-        {
-			p2.x = randRange(min, max);
-        }
         
+        p2.x = randRange(min, max);
         p2.y = HEIGHT;
 
         Line L = Line(p1, p2);
@@ -182,21 +175,14 @@ std::vector<Highway> genLines()
         Point p2;
 
 		//Limit placements of highways to the ith TOTAL_LENGTH / NUM_VERTICAL_HIGHWAYS length stretch of the road
-		double min = ( (HEIGHT - (-HEIGHT)) * i) / NUM_HORIZONTAL_HIGHWAYS;
-		double max = ( (HEIGHT - (-HEIGHT)) * (i + 1)) / NUM_HORIZONTAL_HIGHWAYS;
+		
+      double min = -WIDTH + ((i+ 1) * 2 * WIDTH * (1.0f / (NUM_HORIZONTAL_HIGHWAYS + 2)));
+      double max = -WIDTH + ((i+ 1) * 2 * WIDTH * (2.0f / (NUM_HORIZONTAL_HIGHWAYS + 2)));
 
 		p1.y = randRange(min, max);
         p1.x = -WIDTH;
 
-        if (((rand() % 1000) / 1000.0f) < HIGHWAY_TAXI_FACTOR)
-        {
-            p2.y = p1.y;
-        }
-        else
-        {
             p2.y = randRange(min, max);
-        }
-
         p2.x = WIDTH;
 
         Line L = Line(p1, p2);
